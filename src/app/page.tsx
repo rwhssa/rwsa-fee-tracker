@@ -8,6 +8,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ChartLoadingSpinner from "@/components/ChartLoadingSpinner";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { getCurrentAcademicYear } from "@/lib/utils";
 
 export default function Home() {
   const [totalStudents, setTotalStudents] = useState(0);
@@ -45,19 +46,6 @@ export default function Home() {
 
     fetchStudentStats();
   }, []);
-
-  const getCurrentAcademicYear = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-
-    // Academic year starts from August (month 8)
-    if (currentMonth >= 8) {
-      return currentYear - 1911; // Convert to ROC year
-    } else {
-      return currentYear - 1912; // Previous academic year
-    }
-  };
 
   const currentAcademicYear = getCurrentAcademicYear();
 

@@ -8,7 +8,6 @@ export default function AboutPage() {
   const [gitCommit, setGitCommit] = useState("N/A");
 
   useEffect(() => {
-    // Get version info from package.json or environment variables
     setAppVersion(process.env.npm_package_version || "0.1.0");
     setGitCommit(process.env.NEXT_PUBLIC_GIT_COMMIT || "N/A");
   }, []);

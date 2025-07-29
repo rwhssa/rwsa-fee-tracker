@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-interface Student {
-  id: string;
-  class: string;
-  studentId: string;
-  name: string;
-  status: "已繳納" | "有會員資格（但未繳納）" | "未繳納" | null;
-  schoolYear: number;
-}
+import { type Student } from "@/lib/utils";
 
 interface EditStudentModalProps {
   isOpen: boolean;

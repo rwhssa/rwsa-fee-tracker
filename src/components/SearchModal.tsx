@@ -4,13 +4,7 @@ import { useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
-interface Student {
-  id: string;
-  class: string;
-  studentId: string;
-  name: string;
-  status: "已繳納" | "有會員資格（但未繳納）" | "未繳納" | null;
-}
+import { type Student } from "@/lib/utils";
 
 export default function SearchModal({
   isOpen,

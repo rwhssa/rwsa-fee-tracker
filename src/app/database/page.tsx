@@ -12,39 +12,16 @@ import {
   getDocs,
   query,
   orderBy,
-  doc,
   updateDoc,
+  doc,
 } from "firebase/firestore";
-
-interface Student {
-  id: string;
-  class: string;
-  studentId: string;
-  name: string;
-  status: "已繳納" | "有會員資格（但未繳納）" | "未繳納" | null;
-  schoolYear: number;
-}
-
-const getCurrentAcademicYear = () => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-
-  // Academic year starts from August (month 8)
-  if (currentMonth >= 8) {
-    return currentYear - 1911; // Convert to ROC year
-  } else {
-    return currentYear - 1912; // Previous academic year
-  }
-};
-
-const getGradeStatus = (schoolYear: number, currentYear: number) => {
-  const yearsElapsed = currentYear - schoolYear;
-  if (yearsElapsed === 0) return "高一";
-  if (yearsElapsed === 1) return "高二";
-  if (yearsElapsed === 2) return "高三";
-  return `已畢業 ${yearsElapsed - 2} 年`;
-};
+import {
+  getCurrentAcademicYear,
+  getGradeStatus,
+  getStatusStyle,
+  getShortStatus,
+  type Student,
+} from "@/lib/utils";
 
 export default function DatabasePage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -54,23 +31,19 @@ export default function DatabasePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  // Filters
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Sort config
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
   } | null>(null);
 
-  // Filter dropdowns state
   const [showClassFilter, setShowClassFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
 
-  // Refs for dropdown containers
   const classFilterRef = useRef<HTMLDivElement>(null);
   const statusFilterRef = useRef<HTMLDivElement>(null);
 
@@ -99,28 +72,23 @@ export default function DatabasePage() {
     fetchStudents();
   }, []);
 
-  // Apply filters and search
   useEffect(() => {
     let filtered = [...students];
 
-    // Year filter
     if (yearFilter !== "all") {
       filtered = filtered.filter(
         (student) => student.schoolYear === Number(yearFilter),
       );
     }
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((student) => student.status === statusFilter);
     }
 
-    // Class filter
     if (classFilter !== "all") {
       filtered = filtered.filter((student) => student.class === classFilter);
     }
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(
         (student) =>
@@ -130,13 +98,11 @@ export default function DatabasePage() {
       );
     }
 
-    // Apply sorting
     if (sortConfig) {
       filtered.sort((a, b) => {
         const aValue = a[sortConfig.key as keyof Student];
         const bValue = b[sortConfig.key as keyof Student];
 
-        // Handle null values
         if (aValue === null && bValue === null) return 0;
         if (aValue === null) return sortConfig.direction === "asc" ? 1 : -1;
         if (bValue === null) return sortConfig.direction === "asc" ? -1 : 1;
@@ -154,7 +120,6 @@ export default function DatabasePage() {
     setFilteredStudents(filtered);
   }, [students, yearFilter, statusFilter, classFilter, searchTerm, sortConfig]);
 
-  // Handle outside clicks to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -197,7 +162,6 @@ export default function DatabasePage() {
       const studentRef = doc(db, "students", studentId);
       await updateDoc(studentRef, updates);
 
-      // Update local state
       setStudents((prevStudents) =>
         prevStudents.map((student) =>
           student.id === studentId ? { ...student, ...updates } : student,
@@ -213,33 +177,6 @@ export default function DatabasePage() {
     setIsEditModalOpen(true);
   };
 
-  const getStatusStyle = (status: Student["status"]) => {
-    switch (status) {
-      case "已繳納":
-        return "status-paid";
-      case "未繳納":
-        return "status-unpaid";
-      case "有會員資格（但未繳納）":
-        return "status-exempt";
-      default:
-        return "bg-gray-500/20 text-gray-400 border border-gray-500/30";
-    }
-  };
-
-  const getShortStatus = (status: Student["status"]) => {
-    switch (status) {
-      case "已繳納":
-        return "已繳納";
-      case "未繳納":
-        return "未繳納";
-      case "有會員資格（但未繳納）":
-        return "免繳費";
-      default:
-        return "未記錄";
-    }
-  };
-
-  // Generate filter options
   const academicYearOptions = Array.from(
     new Set(students.map((s) => s.schoolYear)),
   ).sort((a, b) => b - a);

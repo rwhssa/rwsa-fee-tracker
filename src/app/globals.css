@@ -118,15 +118,15 @@
 
     /* Status indicators */
     .status-paid {
-        @apply bg-green-500/20 text-green-400 border border-green-500/30;
+        @apply bg-green-800 text-green-200;
     }
 
     .status-unpaid {
-        @apply bg-red-500/20 text-red-400 border border-red-500/30;
+        @apply bg-red-800 text-red-200;
     }
 
     .status-exempt {
-        @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+        @apply bg-yellow-800 text-yellow-200;
     }
 
     /* Loading animation */
