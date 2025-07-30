@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ImportModal from "@/components/ImportModal";
 import EditStudentModal from "@/components/EditStudentModal";
+import BatchOperationBar from "@/components/BatchOperationBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ChartLoadingSpinner from "@/components/ChartLoadingSpinner";
 import { db } from "@/lib/firebase";
@@ -13,7 +14,9 @@ import {
   query,
   orderBy,
   updateDoc,
+  deleteDoc,
   doc,
+  writeBatch,
 } from "firebase/firestore";
 import {
   getCurrentAcademicYear,
@@ -31,6 +34,13 @@ export default function DatabasePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  // Batch operation states
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
@@ -39,7 +49,7 @@ export default function DatabasePage() {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
-  } | null>(null);
+  } | null>({ key: "class", direction: "asc" });
 
   const [showClassFilter, setShowClassFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
@@ -177,6 +187,101 @@ export default function DatabasePage() {
     setIsEditModalOpen(true);
   };
 
+  // Batch operation handlers
+  const enterBatchMode = () => {
+    setIsBatchMode(true);
+    setSelectedStudents([]);
+  };
+
+  const exitBatchMode = () => {
+    setIsBatchMode(false);
+    setSelectedStudents([]);
+  };
+
+  const handleStudentSelect = (student: Student, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedStudents((prev) => [...prev, student]);
+    } else {
+      setSelectedStudents((prev) => prev.filter((s) => s.id !== student.id));
+    }
+  };
+
+  const handleSelectAll = () => {
+    setSelectedStudents([...filteredStudents]);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedStudents([]);
+  };
+
+  const handleBatchUpdateStatus = async (status: string) => {
+    setBatchLoading(true);
+    setErrorMessage("");
+    try {
+      const batch = writeBatch(db);
+
+      selectedStudents.forEach((student) => {
+        const studentRef = doc(db, "students", student.id);
+        batch.update(studentRef, { status });
+      });
+
+      await batch.commit();
+
+      // Update local state
+      setStudents((prevStudents) =>
+        prevStudents.map((student) =>
+          selectedStudents.some((s) => s.id === student.id)
+            ? { ...student, status: status as Student["status"] }
+            : student,
+        ),
+      );
+
+      setSuccessMessage(`已成功更新 ${selectedStudents.length} 名學生的狀態`);
+      setSelectedStudents([]);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Error updating students: ", error);
+      setErrorMessage("更新學生狀態時發生錯誤，請稍後再試");
+    } finally {
+      setBatchLoading(false);
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    setBatchLoading(true);
+    setErrorMessage("");
+    try {
+      const batch = writeBatch(db);
+
+      selectedStudents.forEach((student) => {
+        const studentRef = doc(db, "students", student.id);
+        batch.delete(studentRef);
+      });
+
+      await batch.commit();
+
+      // Update local state
+      setStudents((prevStudents) =>
+        prevStudents.filter(
+          (student) => !selectedStudents.some((s) => s.id === student.id),
+        ),
+      );
+
+      setSuccessMessage(`已成功刪除 ${selectedStudents.length} 名學生`);
+      setSelectedStudents([]);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Error deleting students: ", error);
+      setErrorMessage("刪除學生時發生錯誤，請稍後再試");
+    } finally {
+      setBatchLoading(false);
+    }
+  };
+
   const academicYearOptions = Array.from(
     new Set(students.map((s) => s.schoolYear)),
   ).sort((a, b) => b - a);
@@ -197,12 +302,20 @@ export default function DatabasePage() {
               <h1 className="text-2xl font-bold text-white mb-1">資料庫</h1>
               <p className="text-gray-400 text-sm">學生資料管理系統</p>
             </div>
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="btn-primary text-sm px-3 py-2"
-            >
-              匯入資料
-            </button>
+            <div className="flex space-x-2 mr-2">
+              <button
+                onClick={enterBatchMode}
+                className="btn-secondary text-sm px-3 py-2"
+              >
+                批次操作
+              </button>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="btn-primary text-sm px-3 py-2"
+              >
+                匯入資料
+              </button>
+            </div>
           </div>
 
           {/* Quick Stats */}
@@ -277,28 +390,134 @@ export default function DatabasePage() {
           </div>
         </div>
 
+        {/* Success/Error Messages */}
+        {(successMessage || errorMessage) && (
+          <div className="mx-4 mb-4">
+            {successMessage && (
+              <div className="message-success flex items-center space-x-2">
+                <svg
+                  className="w-5 h-5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span className="text-sm">{successMessage}</span>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="message-error flex items-center space-x-2">
+                <svg
+                  className="w-5 h-5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="text-sm">{errorMessage}</span>
+                <button
+                  onClick={() => setErrorMessage("")}
+                  className="ml-auto text-red-400 hover:text-red-300"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Table Container */}
         <div className="mx-4 mb-32">
-          {loading ? (
+          {/* Batch Operation Bar */}
+          {isBatchMode && (
+            <div className="batch-toolbar rounded-t-2xl relative z-30">
+              <BatchOperationBar
+                selectedStudents={selectedStudents}
+                totalStudents={filteredStudents.length}
+                isLoading={batchLoading}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={handleDeselectAll}
+                onBatchUpdateStatus={handleBatchUpdateStatus}
+                onBatchDelete={handleBatchDelete}
+                onExitBatchMode={exitBatchMode}
+              />
+            </div>
+          )}
+
+          {loading || batchLoading ? (
             <div className="p-4">
               <LoadingSpinner
                 size="lg"
-                text="載入學生資料中"
+                text={batchLoading ? "處理批次操作中..." : "載入學生資料中"}
                 variant="skeleton"
               />
             </div>
           ) : (
-            <>
-              <table className="w-full text-sm bg-gray-900/40 rounded-t-2xl border border-gray-800/50">
+            <div className={isBatchMode ? "batch-mode" : ""}>
+              <table
+                className={`w-full text-sm bg-gray-900/40 border border-gray-800/50 ${isBatchMode ? "rounded-b-2xl" : "rounded-t-2xl"}`}
+              >
                 {/* Table Header */}
-                <thead className="bg-gray-900/80 sticky top-0 z-10">
+                <thead className="bg-gray-900/80 sticky top-0 z-20">
                   <tr>
-                    <th className="table-cell text-center border-b border-gray-800 w-20">
+                    {isBatchMode && (
+                      <th className="table-cell text-center border-b border-gray-800 w-12">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedStudents.length ===
+                              filteredStudents.length &&
+                            filteredStudents.length > 0
+                          }
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate =
+                                selectedStudents.length > 0 &&
+                                selectedStudents.length <
+                                  filteredStudents.length;
+                            }
+                          }}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              handleSelectAll();
+                            } else {
+                              handleDeselectAll();
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                      </th>
+                    )}
+                    <th className="table-cell text-center border-b border-gray-800 w-24">
                       <div className="relative" ref={classFilterRef}>
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             onClick={() => handleSort("class")}
-                            className="text-gray-300 hover:text-white"
+                            className="text-gray-300 hover:text-white flex items-center justify-center whitespace-nowrap"
                           >
                             <span>班級</span>
                             {sortConfig?.key === "class" && (
@@ -357,7 +576,7 @@ export default function DatabasePage() {
                     <th className="table-cell text-center border-b border-gray-800 w-20">
                       <button
                         onClick={() => handleSort("studentId")}
-                        className="flex items-center space-x-1 text-gray-300 hover:text-white"
+                        className="flex items-center justify-center space-x-1 text-gray-300 hover:text-white w-full"
                       >
                         <span>學號</span>
                         {sortConfig?.key === "studentId" && (
@@ -370,7 +589,7 @@ export default function DatabasePage() {
                     <th className="table-cell text-center border-b border-gray-800 w-20">
                       <button
                         onClick={() => handleSort("name")}
-                        className="flex items-center space-x-1 text-gray-300 hover:text-white"
+                        className="flex items-center justify-center space-x-1 text-gray-300 hover:text-white w-full"
                       >
                         <span>姓名</span>
                         {sortConfig?.key === "name" && (
@@ -385,7 +604,7 @@ export default function DatabasePage() {
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             onClick={() => handleSort("status")}
-                            className="text-gray-300 hover:text-white"
+                            className="text-gray-300 hover:text-white flex items-center justify-center"
                           >
                             <span>狀態</span>
                             {sortConfig?.key === "status" && (
@@ -441,65 +660,88 @@ export default function DatabasePage() {
                         )}
                       </div>
                     </th>
-                    <th className="table-cell text-center border-b border-gray-800 w-14">
-                      <span className="text-gray-300">操作</span>
-                    </th>
+                    {!isBatchMode && (
+                      <th className="table-cell text-center border-b border-gray-800 w-14">
+                        <span className="text-gray-300">操作</span>
+                      </th>
+                    )}
                   </tr>
                 </thead>
 
                 {/* Table Body */}
                 <tbody>
                   {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student, index) => (
-                      <tr
-                        key={student.id}
-                        className={`table-row border-b border-gray-800/50 ${
-                          index % 2 === 0 ? "bg-gray-950/50" : "bg-gray-900/20"
-                        }`}
-                      >
-                        <td className="table-cell text-white text-center truncate w-20">
-                          {student.class}
-                        </td>
-                        <td className="table-cell text-gray-300 font-mono text-xs text-center truncate w-24">
-                          {student.studentId}
-                        </td>
-                        <td className="table-cell text-white text-center truncate w-20">
-                          {student.name}
-                        </td>
-                        <td className="table-cell text-center w-28">
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusStyle(student.status)}`}
-                          >
-                            {getShortStatus(student.status)}
-                          </span>
-                        </td>
-                        <td className="table-cell text-center w-14">
-                          <button
-                            onClick={() => handleEditStudent(student)}
-                            className="text-gray-400 hover:text-white p-1.5 rounded hover:bg-gray-800 transition-colors"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-3.5 w-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    filteredStudents.map((student, index) => {
+                      const isSelected = selectedStudents.some(
+                        (s) => s.id === student.id,
+                      );
+                      return (
+                        <tr
+                          key={student.id}
+                          className={`table-row border-b border-gray-800/50 ${
+                            index % 2 === 0
+                              ? "bg-gray-950/50"
+                              : "bg-gray-900/20"
+                          } ${isSelected ? "selected" : ""}`}
+                        >
+                          {isBatchMode && (
+                            <td className="table-cell text-center w-12">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) =>
+                                  handleStudentSelect(student, e.target.checked)
+                                }
+                                className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                               />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                            </td>
+                          )}
+                          <td className="table-cell text-white text-center truncate w-24">
+                            {student.class}
+                          </td>
+                          <td className="table-cell text-gray-300 font-mono text-xs text-center truncate w-24">
+                            {student.studentId}
+                          </td>
+                          <td className="table-cell text-white text-center truncate w-20">
+                            {student.name}
+                          </td>
+                          <td className="table-cell text-center w-28">
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusStyle(student.status)}`}
+                            >
+                              {getShortStatus(student.status)}
+                            </span>
+                          </td>
+                          {!isBatchMode && (
+                            <td className="table-cell text-center w-14">
+                              <button
+                                onClick={() => handleEditStudent(student)}
+                                className="text-gray-400 hover:text-white p-1.5 rounded hover:bg-gray-800 transition-colors"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-3.5 w-3.5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                  />
+                                </svg>
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={isBatchMode ? 5 : 5}
                         className="table-cell py-12 text-center text-gray-400"
                       >
                         {searchTerm ||
@@ -513,7 +755,7 @@ export default function DatabasePage() {
                   )}
                 </tbody>
               </table>
-            </>
+            </div>
           )}
         </div>
 
