@@ -71,7 +71,7 @@ export default function Home() {
 
           {/* Key Statistics */}
           <div className="grid grid-cols-2 gap-5 mb-8">
-            <div className="card hover:scale-[1.02] transition-transform duration-300">
+            <div className="card">
               <div className="text-sm text-gray-400 mb-3 font-medium">
                 在學學生人數
               </div>
@@ -83,7 +83,7 @@ export default function Home() {
                 )}
               </div>
             </div>
-            <div className="card hover:scale-[1.02] transition-transform duration-300">
+            <div className="card">
               <div className="text-sm text-gray-400 mb-3 font-medium">
                 已繳納人數
               </div>
@@ -128,26 +128,28 @@ export default function Home() {
                   <h3 className="text-lg font-bold text-white">繳納狀態分佈</h3>
 
                   {/* Pie Chart View Mode Toggle */}
-                  <div className="bg-gray-800/80 rounded-xl p-1 border border-gray-700/60 shadow-lg backdrop-blur-sm">
+                  <div className="bg-gray-800/90 rounded-xl p-1 border border-gray-700/60 shadow-lg">
                     <button
                       onClick={() => setChartViewMode("all")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150 min-h-[40px] ${
                         chartViewMode === "all"
-                          ? "bg-blue-600 text-white shadow-lg"
-                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60 active:bg-gray-700/80 active:scale-95"
                       }`}
+                      style={{ transform: "translateZ(0)" }}
                     >
-                      所有在學學生
+                      在學學生
                     </button>
                     <button
                       onClick={() => setChartViewMode("current")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150 min-h-[40px] ${
                         chartViewMode === "current"
-                          ? "bg-blue-600 text-white shadow-lg"
-                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60 active:bg-gray-700/80 active:scale-95"
                       }`}
+                      style={{ transform: "translateZ(0)" }}
                     >
-                      當屆（高一）
+                      高一
                     </button>
                   </div>
                 </div>
@@ -155,31 +157,33 @@ export default function Home() {
               </div>
 
               {/* Annual Payment Trend Line Chart */}
-              <div className="card hover:shadow-2xl transition-all duration-300">
+              <div className="card">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-white">
-                    歷年繳納數量及比例折線圖
+                    歷年繳納趨勢圖
                   </h3>
 
                   {/* Line Chart View Mode Toggle */}
-                  <div className="bg-gray-800/80 rounded-xl p-1 border border-gray-700/60 shadow-lg backdrop-blur-sm">
+                  <div className="bg-gray-800/90 rounded-xl p-1 border border-gray-700/60 shadow-lg">
                     <button
                       onClick={() => setLineChartViewMode("count")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150 min-h-[40px] ${
                         lineChartViewMode === "count"
-                          ? "bg-blue-600 text-white shadow-lg"
-                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60 active:bg-gray-700/80 active:scale-95"
                       }`}
+                      style={{ transform: "translateZ(0)" }}
                     >
                       數量
                     </button>
                     <button
                       onClick={() => setLineChartViewMode("percentage")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150 min-h-[40px] ${
                         lineChartViewMode === "percentage"
-                          ? "bg-blue-600 text-white shadow-lg"
-                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60 active:bg-gray-700/80 active:scale-95"
                       }`}
+                      style={{ transform: "translateZ(0)" }}
                     >
                       比例
                     </button>

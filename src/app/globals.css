@@ -37,60 +37,113 @@
 
     /* Modern card design */
     .card {
-        @apply bg-gray-900/80 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-sm;
+        @apply bg-gray-900/80 rounded-2xl p-6 border border-gray-800/50;
         background: linear-gradient(
             135deg,
             rgba(55, 65, 81, 0.15) 0%,
             rgba(17, 24, 39, 0.8) 100%
         );
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        transform: translateZ(0);
+        will-change: auto;
     }
 
     .card:hover {
-        @apply border-gray-700/70 transform transition-all duration-300;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        @apply border-gray-700/70;
+        transition: border-color 0.2s ease;
+    }
+
+    /* Mobile-specific card optimizations */
+    @media (max-width: 768px) {
+        .card {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .card:active {
+            @apply border-gray-700/80;
+            transform: translateZ(0) scale(0.98);
+            transition: all 0.1s ease;
+        }
     }
 
     /* Modern button styles */
     .btn-primary {
         @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800
-           text-white font-medium py-3 px-6 rounded-xl transition-all duration-200
-           shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+           text-white font-medium py-3 px-6 rounded-xl transition-colors duration-150
+           shadow-lg;
+        transform: translateZ(0);
+        min-height: 44px;
+        min-width: 44px;
     }
 
     .btn-secondary {
         @apply bg-gray-800/60 hover:bg-gray-700/60 text-white font-medium py-3 px-6
-           rounded-xl transition-all duration-200 border border-gray-700/50
-           hover:border-gray-600/50 backdrop-blur-sm;
+           rounded-xl transition-colors duration-150 border border-gray-700/50
+           hover:border-gray-600/50;
+        transform: translateZ(0);
+        min-height: 44px;
+        min-width: 44px;
     }
 
     .btn-ghost {
         @apply bg-transparent hover:bg-white/5 text-gray-300 hover:text-white
-           font-medium py-3 px-6 rounded-xl transition-all duration-200
+           font-medium py-3 px-6 rounded-xl transition-colors duration-150
            border border-transparent hover:border-white/10;
+        transform: translateZ(0);
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Mobile button optimizations */
+    @media (max-width: 768px) {
+        .btn-primary:active,
+        .btn-secondary:active,
+        .btn-ghost:active {
+            transform: translateZ(0) scale(0.95);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-secondary,
+        .btn-ghost {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
     }
 
     /* Input styles */
     .input {
         @apply bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3
            text-white placeholder-gray-400 focus:outline-none focus:ring-2
-           focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200
-           backdrop-blur-sm;
+           focus:ring-blue-500/50 focus:border-blue-500/50 transition-colors duration-150;
+        transform: translateZ(0);
+        min-height: 44px;
+    }
+
+    /* Mobile input optimizations */
+    @media (max-width: 768px) {
+        .input {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
     }
 
     /* Navigation styles */
     .nav-item {
         @apply flex items-center justify-center py-3 px-4 rounded-2xl
-           relative overflow-hidden border border-transparent;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        will-change: transform, background-color, border-color;
-        transform: translateZ(0); /* Force hardware acceleration */
+           relative border border-transparent;
+        transition: all 0.2s ease;
+        transform: translateZ(0);
+        min-height: 48px;
+        min-width: 48px;
     }
 
     .nav-item.active {
         @apply bg-gradient-to-r from-blue-600/20 to-blue-700/20
            text-blue-400 border-blue-500/30;
-        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
     }
 
     .nav-item:not(.active) {
@@ -98,16 +151,33 @@
            hover:border-white/10;
     }
 
+    /* Mobile navigation optimizations */
+    @media (max-width: 768px) {
+        .nav-item:active {
+            transform: translateZ(0) scale(0.9);
+            transition: transform 0.1s ease;
+        }
+    }
+
     /* Bottom navigation bar container */
     .bottom-nav {
-        @apply bg-gray-900/80 backdrop-blur-xl rounded-3xl p-2
-           border border-gray-700/50 shadow-2xl;
+        @apply bg-gray-900/90 rounded-3xl p-2
+           border border-gray-700/50 shadow-lg;
         background: linear-gradient(
             135deg,
-            rgba(17, 24, 39, 0.9) 0%,
-            rgba(31, 41, 55, 0.8) 100%
+            rgba(17, 24, 39, 0.95) 0%,
+            rgba(31, 41, 55, 0.9) 100%
         );
-        will-change: transform;
+        transform: translateZ(0);
+    }
+
+    /* Mobile bottom nav optimizations */
+    @media (max-width: 768px) {
+        .bottom-nav {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
+        }
     }
 
     /* Avatar styles */
@@ -153,29 +223,50 @@
 
     /* Table styles */
     .table-container {
-        @apply bg-gray-900/40 rounded-t-2xl border border-gray-800/50 backdrop-blur-sm;
+        @apply bg-gray-900/40 rounded-t-2xl border border-gray-800/50;
         background: linear-gradient(
             135deg,
             rgba(55, 65, 81, 0.1) 0%,
             rgba(17, 24, 39, 0.6) 100%
         );
+        transform: translateZ(0);
+        -webkit-overflow-scrolling: touch;
     }
 
     .table-header {
-        @apply bg-gray-900/80 backdrop-blur-xl;
+        @apply bg-gray-900/90;
         background: linear-gradient(
             135deg,
-            rgba(17, 24, 39, 0.9) 0%,
-            rgba(31, 41, 55, 0.8) 100%
+            rgba(17, 24, 39, 0.95) 0%,
+            rgba(31, 41, 55, 0.9) 100%
         );
     }
 
     .table-row {
-        @apply transition-colors duration-200;
+        @apply transition-colors duration-150;
+        transform: translateZ(0);
     }
 
     .table-row:hover {
         @apply bg-gray-800/30;
+    }
+
+    /* Mobile table optimizations */
+    @media (max-width: 768px) {
+        .table-container {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
+        .table-header {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
+        .table-row:active {
+            @apply bg-gray-800/40;
+            transition: background-color 0.1s ease;
+        }
     }
 
     .table-cell {
@@ -198,8 +289,11 @@
 
     /* Smooth transitions for better performance */
     .smooth-transition {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition:
+            transform 0.2s ease,
+            opacity 0.2s ease;
         will-change: auto;
+        transform: translateZ(0);
     }
 
     /* Prevent layout shifts */
@@ -208,6 +302,32 @@
         -webkit-backface-visibility: hidden;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
+    }
+
+    /* Mobile performance optimizations */
+    @media (max-width: 768px) {
+        * {
+            -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        /* Reduce backdrop-blur usage on mobile */
+        .backdrop-blur-xl,
+        .backdrop-blur-lg,
+        .backdrop-blur-md {
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .backdrop-blur-sm {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
     }
 }
 
@@ -258,11 +378,43 @@
 /* Mobile-first PWA design */
 .container {
     @apply px-4;
+    transform: translateZ(0);
 }
 
+/* Mobile scrolling optimizations */
+@media (max-width: 768px) {
+    html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    body {
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        touch-action: manipulation;
+    }
+
+    /* Optimize main content scrolling */
+    main {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        will-change: scroll-position;
+        scroll-behavior: smooth;
+    }
+
+    /* Optimize scrolling for all scrollable containers */
+    .overflow-auto,
+    .overflow-x-auto,
+    .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+}
 /* Mobile table optimizations */
 .table-cell {
     @apply px-2 py-3 text-sm;
+    transform: translateZ(0);
 }
 
 .table-header .table-cell {
@@ -274,11 +426,14 @@
     @apply overflow-auto;
     -webkit-overflow-scrolling: touch;
     max-height: 60vh;
+    transform: translateZ(0);
+    will-change: scroll-position;
 }
 
 table {
     @apply min-w-full;
     width: 380px; /* Optimized for mobile with wider class column */
+    transform: translateZ(0);
 }
 
 /* Batch mode table adjustments */
@@ -289,17 +444,27 @@ table {
 /* Filter dropdowns for mobile */
 .filter-dropdown {
     @apply text-sm min-w-32;
+    transform: translateZ(0);
 }
 
 /* Batch operation styles */
 .batch-toolbar {
-    @apply bg-gray-900/95 backdrop-blur-xl border border-gray-800/50 border-b-0;
+    @apply bg-gray-900/95 border border-gray-800/50 border-b-0;
     background: linear-gradient(
         135deg,
         rgba(17, 24, 39, 0.95) 0%,
         rgba(31, 41, 55, 0.9) 100%
     );
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transform: translateZ(0);
+}
+
+/* Mobile batch toolbar optimizations */
+@media (max-width: 768px) {
+    .batch-toolbar {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
 }
 
 .batch-toolbar + div table {

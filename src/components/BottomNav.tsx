@@ -51,17 +51,20 @@ const BottomNav = () => {
                 key={item.id}
                 href={item.href}
                 className={`nav-item group ${isActive ? "active" : ""}`}
+                style={{ transform: "translateZ(0)" }}
               >
                 <div className="flex items-center space-x-2">
                   <div
-                    className={`transition-all duration-300 ease-out ${
-                      isActive ? "scale-110" : "group-hover:scale-105"
+                    className={`transition-transform duration-200 ease-out ${
+                      isActive
+                        ? "scale-110"
+                        : "group-hover:scale-105 group-active:scale-95"
                     }`}
                   >
                     {item.icon}
                   </div>
                   <span
-                    className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ease-out ${
+                    className={`text-sm font-medium whitespace-nowrap transition-all duration-200 ease-out ${
                       isActive
                         ? "opacity-100 translate-x-0 max-w-20"
                         : "opacity-0 translate-x-2 max-w-0 overflow-hidden"
@@ -79,9 +82,10 @@ const BottomNav = () => {
             onClick={() => setIsSearchModalOpen(true)}
             className="nav-item group relative"
             aria-label="搜尋學生"
+            style={{ transform: "translateZ(0)" }}
           >
             <div className="flex items-center space-x-2">
-              <div className="transition-transform duration-300 ease-out group-hover:scale-105">
+              <div className="transition-transform duration-200 ease-out group-hover:scale-105 group-active:scale-95">
                 {searchButton.icon}
               </div>
               <span className="text-sm font-medium whitespace-nowrap">
@@ -90,7 +94,7 @@ const BottomNav = () => {
             </div>
 
             {/* Hover effect */}
-            <div className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out -z-10"></div>
+            <div className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-out -z-10"></div>
           </button>
         </nav>
       </div>

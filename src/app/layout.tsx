@@ -53,17 +53,25 @@ export default function RootLayout({
       <body
         className={`${inter.className} bg-gray-950 text-white min-h-screen antialiased`}
         style={{
-          WebkitTapHighlightColor: "transparent",
+          WebkitTapHighlightColor: "rgba(59, 130, 246, 0.1)",
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+          touchAction: "manipulation",
         }}
       >
         <AuthProvider>
           {/* Mobile/Tablet Layout */}
           <div className="lg:hidden">
             {/* Main Content Area */}
-            <div className="min-h-screen pb-24 safe-area-top">{children}</div>
+            <div
+              className="min-h-screen pb-24 safe-area-top"
+              style={{ transform: "translateZ(0)" }}
+            >
+              {children}
+            </div>
             {/* Bottom Navigation */}
             <BottomNav />
           </div>
