@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import ChartLoadingSpinner from "./ChartLoadingSpinner";
+import { getCurrentAcademicYear } from "@/lib/utils";
 
 const COLORS: { [key: string]: string } = {
   已繳納: "#10b981", // emerald-500
@@ -28,10 +29,15 @@ interface ChartData {
 
 type ViewMode = "current" | "all";
 
-export default function FeeStatusPieChart() {
+interface FeeStatusPieChartProps {
+  viewMode?: ViewMode;
+}
+
+export default function FeeStatusPieChart({
+  viewMode = "all",
+}: FeeStatusPieChartProps) {
   const [data, setData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("current");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,11 +46,7 @@ export default function FeeStatusPieChart() {
       const students = querySnapshot.docs.map((doc) => doc.data());
 
       // Get current academic year
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
-      const currentAcademicYear =
-        currentMonth >= 8 ? currentYear - 1911 : currentYear - 1912;
+      const currentAcademicYear = getCurrentAcademicYear();
 
       // Filter students based on view mode
       const filteredStudents =
@@ -65,7 +67,7 @@ export default function FeeStatusPieChart() {
           acc[status] = (acc[status] || 0) + 1;
           return acc;
         },
-        {},
+        {} as { [key: string]: number },
       );
 
       const totalStudents = filteredStudents.length;
@@ -92,106 +94,108 @@ export default function FeeStatusPieChart() {
     return <ChartLoadingSpinner height="h-64" text="載入圓餅圖中" />;
   }
 
-  if (data.length === 0) {
-    return (
-      <div className="w-full h-64 bg-gray-700 rounded flex justify-center items-center">
-        <p className="text-gray-400">目前沒有學生資料可供分析。</p>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full">
-      {/* View Mode Toggle */}
-      <div className="flex justify-center mb-4">
-        <div className="bg-gray-800/60 rounded-xl p-1 border border-gray-700/50">
-          <button
-            onClick={() => setViewMode("current")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              viewMode === "current"
-                ? "bg-blue-600 text-white shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-            }`}
-          >
-            當屆（高一）
-          </button>
-          <button
-            onClick={() => setViewMode("all")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              viewMode === "all"
-                ? "bg-blue-600 text-white shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-            }`}
-          >
-            所有在學學生
-          </button>
+      {data.length === 0 ? (
+        <div className="w-full h-[350px] bg-gradient-to-br from-gray-800/40 to-gray-900/60 rounded-2xl border border-gray-700/30 backdrop-blur-sm flex flex-col justify-center items-center p-8">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-700/50 flex items-center justify-center">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="text-gray-300 text-lg font-medium mb-2">
+                目前沒有學生資料可供分析
+              </p>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                {viewMode === "current"
+                  ? "請嘗試切換到「所有在學學生」檢視，或匯入當屆學生資料"
+                  : "請先透過資料庫頁面匯入學生資料"}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <ResponsiveContainer width="100%" height={350}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="count"
-            nameKey="name"
-            label={({
-              cx,
-              cy,
-              midAngle,
-              innerRadius,
-              outerRadius,
-              value,
-              name,
-            }) => {
-              if (midAngle === undefined || value === undefined) return null;
-              const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-              const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-              const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-
-              const entry = data.find((d) => d.name === name);
-              const displayValue = `${entry?.count || 0}人`;
-
-              return (
-                <text
-                  x={x}
-                  y={y}
-                  fill="white"
-                  textAnchor={x > cx ? "start" : "end"}
-                  dominantBaseline="central"
-                  fontSize="12"
-                >
-                  {displayValue}
-                </text>
-              );
-            }}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[entry.name] || "#ccc"} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#334155",
-              border: "none",
-              borderRadius: "0.5rem",
-            }}
-            itemStyle={{ color: "#e2e8f0" }}
-            formatter={(value, name) => {
-              const entry = data.find((d) => d.name === name);
-              return [
-                `${entry?.count || 0} 人 (${(entry?.percentage || 0).toFixed(1)}%)`,
+      ) : (
+        <ResponsiveContainer width="100%" height={350}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="count"
+              nameKey="name"
+              label={({
+                cx,
+                cy,
+                midAngle,
+                innerRadius,
+                outerRadius,
+                value,
                 name,
-              ];
-            }}
-          />
-          <Legend wrapperStyle={{ color: "#e2e8f0" }} />
-        </PieChart>
-      </ResponsiveContainer>
+              }) => {
+                if (midAngle === undefined || value === undefined) return null;
+                const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
+                const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+
+                const entry = data.find((d) => d.name === name);
+                const displayValue = `${entry?.count || 0}人`;
+
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="white"
+                    textAnchor={x > cx ? "start" : "end"}
+                    dominantBaseline="central"
+                    fontSize="13"
+                    fontWeight="500"
+                  >
+                    {displayValue}
+                  </text>
+                );
+              }}
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[entry.name] || "#ccc"}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#334155",
+                border: "none",
+                borderRadius: "0.5rem",
+              }}
+              itemStyle={{ color: "#e2e8f0" }}
+              formatter={(value, name) => {
+                const entry = data.find((d) => d.name === name);
+                return [
+                  `${entry?.count || 0} 人 (${(entry?.percentage || 0).toFixed(1)}%)`,
+                  name,
+                ];
+              }}
+            />
+            <Legend wrapperStyle={{ color: "#e2e8f0" }} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

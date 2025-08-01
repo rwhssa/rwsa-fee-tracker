@@ -10,12 +10,18 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { getCurrentAcademicYear } from "@/lib/utils";
 
+type ViewMode = "current" | "all";
+type LineChartViewMode = "count" | "percentage";
+
 export default function Home() {
   const [totalStudents, setTotalStudents] = useState(0);
   const [paidStudents, setPaidStudents] = useState(0);
   const [exemptStudents, setExemptStudents] = useState(0);
   const [unpaidStudents, setUnpaidStudents] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [chartViewMode, setChartViewMode] = useState<ViewMode>("all");
+  const [lineChartViewMode, setLineChartViewMode] =
+    useState<LineChartViewMode>("count");
 
   useEffect(() => {
     const fetchStudentStats = async () => {
@@ -53,20 +59,22 @@ export default function Home() {
     <ProtectedRoute>
       <main className="min-h-screen bg-gray-950 safe-area-top">
         {/* Header Section */}
-        <div className="px-6 pt-6 pb-4">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">
+        <div className="px-6 pt-8 pb-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
               學生會會費追蹤系統
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-base font-medium">
               {currentAcademicYear} 學年度會費管理系統
             </p>
           </div>
 
           {/* Key Statistics */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="card">
-              <div className="text-sm text-gray-400 mb-2">在學學生人數</div>
+          <div className="grid grid-cols-2 gap-5 mb-8">
+            <div className="card hover:scale-[1.02] transition-transform duration-300">
+              <div className="text-sm text-gray-400 mb-3 font-medium">
+                在學學生人數
+              </div>
               <div className="text-2xl font-bold text-white flex items-center min-h-[2.5rem]">
                 {loading ? (
                   <LoadingSpinner size="sm" variant="dots" />
@@ -75,8 +83,10 @@ export default function Home() {
                 )}
               </div>
             </div>
-            <div className="card">
-              <div className="text-sm text-gray-400 mb-2">已繳納人數</div>
+            <div className="card hover:scale-[1.02] transition-transform duration-300">
+              <div className="text-sm text-gray-400 mb-3 font-medium">
+                已繳納人數
+              </div>
               <div className="text-2xl font-bold text-green-400 flex items-center min-h-[2.5rem]">
                 {loading ? (
                   <LoadingSpinner size="sm" variant="dots" />
@@ -89,10 +99,12 @@ export default function Home() {
         </div>
 
         {/* Fee Payment Overview Charts */}
-        <div className="px-6 mb-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            會費繳納情形概要
-          </h2>
+        <div className="px-6 mb-8">
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-white tracking-tight">
+              會費繳納情形概要
+            </h2>
+          </div>
           {loading ? (
             <div className="space-y-6">
               <div className="card">
@@ -102,45 +114,88 @@ export default function Home() {
                 <ChartLoadingSpinner height="h-64" text="載入圓餅圖中" />
               </div>
               <div className="card">
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-white mb-2">
-                    歷年繳納數量及比例折線圖
-                  </h3>
-                  <p className="text-gray-400 text-sm">
-                    可切換檢視各學年度的繳費數量或繳納率變化趨勢
-                  </p>
-                </div>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  歷年繳納數量及比例折線圖
+                </h3>
                 <ChartLoadingSpinner height="h-64" text="載入折線圖中" />
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Current Year & Enrolled Students Fee Status Pie Chart */}
               <div className="card">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  繳納狀態分佈
-                </h3>
-                <FeeStatusPieChart />
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-white">繳納狀態分佈</h3>
+
+                  {/* Pie Chart View Mode Toggle */}
+                  <div className="bg-gray-800/80 rounded-xl p-1 border border-gray-700/60 shadow-lg backdrop-blur-sm">
+                    <button
+                      onClick={() => setChartViewMode("all")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        chartViewMode === "all"
+                          ? "bg-blue-600 text-white shadow-lg"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                      }`}
+                    >
+                      所有在學學生
+                    </button>
+                    <button
+                      onClick={() => setChartViewMode("current")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        chartViewMode === "current"
+                          ? "bg-blue-600 text-white shadow-lg"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                      }`}
+                    >
+                      當屆（高一）
+                    </button>
+                  </div>
+                </div>
+                <FeeStatusPieChart viewMode={chartViewMode} />
               </div>
 
               {/* Annual Payment Trend Line Chart */}
-              <div className="card">
-                <div className="mb-3">
-                  <h3 className="text-lg font-bold text-white mb-1">
+              <div className="card hover:shadow-2xl transition-all duration-300">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-white">
                     歷年繳納數量及比例折線圖
                   </h3>
-                  <p className="text-gray-400 text-sm">
-                    可切換檢視各學年度的繳費數量或繳納率變化趨勢
-                  </p>
+
+                  {/* Line Chart View Mode Toggle */}
+                  <div className="bg-gray-800/80 rounded-xl p-1 border border-gray-700/60 shadow-lg backdrop-blur-sm">
+                    <button
+                      onClick={() => setLineChartViewMode("count")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        lineChartViewMode === "count"
+                          ? "bg-blue-600 text-white shadow-lg"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                      }`}
+                    >
+                      數量
+                    </button>
+                    <button
+                      onClick={() => setLineChartViewMode("percentage")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        lineChartViewMode === "percentage"
+                          ? "bg-blue-600 text-white shadow-lg"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700/60"
+                      }`}
+                    >
+                      比例
+                    </button>
+                  </div>
                 </div>
-                <AnnualPaymentChart />
+                <AnnualPaymentChart
+                  viewMode={lineChartViewMode}
+                  showToggle={false}
+                />
               </div>
             </div>
           )}
         </div>
 
         {/* Bottom padding for navigation */}
-        <div className="h-16"></div>
+        <div className="h-20 lg:h-6"></div>
       </main>
     </ProtectedRoute>
   );

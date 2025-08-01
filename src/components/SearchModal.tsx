@@ -141,65 +141,92 @@ export default function SearchModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-      <div className="glass-dark rounded-3xl w-full max-w-md shadow-2xl animate-scale-in">
-        <div className="p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">查詢學生</h2>
-            <p className="text-gray-400 text-sm">輸入學號查詢繳費狀態</p>
-          </div>
-
-          {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  學號
-                </label>
-                <input
-                  type="text"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  className="input w-full"
-                  placeholder="請輸入 7 位數學號"
-                  required
-                  pattern="\d{7}"
-                  title="學號必須是 7 位數字"
-                  maxLength={7}
-                />
+    <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
+      <div className="min-h-full flex items-center justify-center p-4 sm:p-8">
+        <div className="bg-gray-900 border border-gray-600 rounded-3xl w-full max-w-md shadow-2xl animate-scale-in">
+          <div className="p-6 sm:p-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
               </div>
-              <button
-                type="submit"
-                disabled={loading || studentId.length !== 7}
-                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="loading-spinner"></div>
-                    <span>查詢中...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-2">
+              <h2 className="text-2xl font-bold text-white mb-2">查詢學生</h2>
+              <p className="text-gray-400 text-sm">輸入學號查詢繳費狀態</p>
+            </div>
+
+            {/* Search Form */}
+            <form onSubmit={handleSearch} className="mb-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    學號
+                  </label>
+                  <input
+                    type="text"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    className="input w-full"
+                    placeholder="請輸入 7 位數學號"
+                    required
+                    pattern="\d{7}"
+                    title="學號必須是 7 位數字"
+                    maxLength={7}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || studentId.length !== 7}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="loading-spinner"></div>
+                      <span>查詢中...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center space-x-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                      <span>查詢</span>
+                    </div>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* Search Results */}
+            {searched && !loading && student && (
+              <div className="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6 animate-slide-up">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
+                      className="h-6 w-6 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -208,117 +235,94 @@ export default function SearchModal({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
-                    <span>查詢</span>
                   </div>
-                )}
-              </button>
-            </div>
-          </form>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">找到學生</h3>
+                    <p className="text-gray-400 text-sm">查詢結果</p>
+                  </div>
+                </div>
 
-          {/* Search Results */}
-          {searched && !loading && student && (
-            <div className="card mb-6 animate-slide-up">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">找到學生</h3>
-                  <p className="text-gray-400 text-sm">查詢結果</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                  <span className="text-gray-400">班級</span>
-                  <span className="text-white font-medium">
-                    {student.class}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                  <span className="text-gray-400">學號</span>
-                  <span className="text-white font-medium font-mono">
-                    {student.studentId}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                  <span className="text-gray-400">姓名</span>
-                  <span className="text-white font-medium">{student.name}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-400">繳費狀態</span>
-                  <div
-                    className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(student.status)}`}
-                  >
-                    {getStatusIcon(student.status)}
-                    <span>{student.status || "未記錄"}</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-3 border-b border-gray-600">
+                    <span className="text-gray-300">班級</span>
+                    <span className="text-white font-semibold">
+                      {student.class}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-600">
+                    <span className="text-gray-300">學號</span>
+                    <span className="text-white font-semibold font-mono">
+                      {student.studentId}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-600">
+                    <span className="text-gray-300">姓名</span>
+                    <span className="text-white font-semibold">
+                      {student.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3">
+                    <span className="text-gray-300">繳費狀態</span>
+                    <div
+                      className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(student.status)}`}
+                    >
+                      {getStatusIcon(student.status)}
+                      <span>{student.status || "未記錄"}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {searched && !loading && !student && (
-            <div className="card mb-6 animate-slide-up">
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-700 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">
-                  查無此學生
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  請確認學號是否正確，或聯絡系統管理員
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex space-x-3">
-            <button className="btn-secondary flex-1" onClick={handleClose}>
-              關閉
-            </button>
-            {student && (
-              <button
-                className="btn-primary flex-1"
-                onClick={() => {
-                  // Future: Navigate to student detail page
-                  console.log("Navigate to student detail:", student.id);
-                }}
-              >
-                查看詳情
-              </button>
             )}
+
+            {searched && !loading && !student && (
+              <div className="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6 animate-slide-up">
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-700/80 rounded-xl mx-auto mb-4 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">
+                    查無此學生
+                  </h3>
+                  <p className="text-gray-300 text-sm">
+                    請確認學號是否正確，或聯絡系統管理員
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3">
+              <button className="btn-secondary flex-1" onClick={handleClose}>
+                關閉
+              </button>
+              {student && (
+                <button
+                  className="btn-primary flex-1"
+                  onClick={() => {
+                    // Future: Navigate to student detail page
+                    console.log("Navigate to student detail:", student.id);
+                  }}
+                >
+                  查看詳情
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

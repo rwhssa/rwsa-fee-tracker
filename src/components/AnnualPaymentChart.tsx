@@ -24,10 +24,17 @@ interface AnnualChartData {
 
 type ViewMode = "count" | "percentage";
 
-export default function AnnualPaymentChart() {
+interface AnnualPaymentChartProps {
+  viewMode?: ViewMode;
+  showToggle?: boolean;
+}
+
+export default function AnnualPaymentChart({
+  viewMode = "count",
+  showToggle = true,
+}: AnnualPaymentChartProps) {
   const [data, setData] = useState<AnnualChartData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("count");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,40 +88,38 @@ export default function AnnualPaymentChart() {
 
   if (data.length === 0) {
     return (
-      <div className="w-full h-64 bg-gray-700 rounded flex justify-center items-center">
-        <p className="text-gray-400">目前沒有學生資料可供分析。</p>
+      <div className="w-full h-[350px] bg-gradient-to-br from-gray-800/40 to-gray-900/60 rounded-2xl border border-gray-700/30 backdrop-blur-sm flex flex-col justify-center items-center p-8">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-700/50 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1-1H5a1 1 0 01-1-1V4z"
+              />
+            </svg>
+          </div>
+          <div>
+            <p className="text-gray-300 text-lg font-medium mb-2">
+              目前沒有學生資料可供分析
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              請先透過資料庫頁面匯入學生資料
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-full">
-      {/* View Mode Toggle */}
-      <div className="flex justify-center mb-4">
-        <div className="bg-gray-800/60 rounded-xl p-1 border border-gray-700/50">
-          <button
-            onClick={() => setViewMode("count")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              viewMode === "count"
-                ? "bg-blue-600 text-white shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-            }`}
-          >
-            數量
-          </button>
-          <button
-            onClick={() => setViewMode("percentage")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              viewMode === "percentage"
-                ? "bg-blue-600 text-white shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-            }`}
-          >
-            比例
-          </button>
-        </div>
-      </div>
-
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />

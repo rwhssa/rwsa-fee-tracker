@@ -5,11 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
 import { navigationItems, searchButton } from "./shared/NavigationData";
+import { useAuth } from "./AuthProvider";
 
 const BottomNav = () => {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -17,6 +19,24 @@ const BottomNav = () => {
 
   // Prevent hydration mismatch by only rendering after mount
   if (!mounted) {
+    return null;
+  }
+
+  // Don't show navigation for unauthorized users or on login/unauthorized pages
+  if (
+    loading ||
+    !user ||
+    pathname === "/login" ||
+    pathname === "/unauthorized"
+  ) {
+    return null;
+  }
+
+  // Check if user is authorized
+  const authorizedEmails = (
+    process.env.NEXT_PUBLIC_AUTHORIZED_EMAILS || ""
+  ).split(",");
+  if (!user.email || !authorizedEmails.includes(user.email)) {
     return null;
   }
 
