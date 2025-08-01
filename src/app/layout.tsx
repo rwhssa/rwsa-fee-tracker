@@ -74,109 +74,33 @@ export default function RootLayout({
           </div>
         </AuthProvider>
 
-        {/* Service Worker Registration with Development Mode Support */}
+        {/* Simple Service Worker Registration */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
                 const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-                // Development mode cache cleanup
+                // Skip service worker in development to avoid errors
                 if (isDev) {
-                  console.log('[App] Development mode detected - clearing caches on load');
-                  window.addEventListener('load', async function() {
-                    try {
-                      // Clear all caches
-                      const cacheNames = await caches.keys();
-                      await Promise.all(cacheNames.map(name => caches.delete(name)));
-
-                      // Unregister existing service workers
-                      const registrations = await navigator.serviceWorker.getRegistrations();
-                      await Promise.all(registrations.map(reg => reg.unregister()));
-
-                      console.log('[App] Development caches cleared');
-                    } catch (error) {
-                      console.error('[App] Failed to clear development caches:', error);
-                    }
-                  });
+                  console.log('[App] Development mode - skipping service worker registration');
+                  return;
                 }
 
                 window.addEventListener('load', async function() {
                   try {
-                    const registration = await navigator.serviceWorker.register('/sw.js', {
-                      updateViaCache: 'none'
-                    });
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('[App] Service Worker registered successfully');
 
-                    console.log('[App] Service Worker registered:', registration);
-
-                    // Handle updates
+                    // Simple update check
                     registration.addEventListener('updatefound', function() {
-                      const newWorker = registration.installing;
-                      if (newWorker) {
-                        newWorker.addEventListener('statechange', function() {
-                          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            if (isDev) {
-                              console.log('[App] Auto-refreshing in development mode');
-                              window.location.reload();
-                            } else {
-                              if (confirm('有新版本可用，是否要重新載入頁面？')) {
-                                window.location.reload();
-                              }
-                            }
-                          }
-                        });
-                      }
-                    });
-
-                    // Check for updates periodically
-                    const updateInterval = isDev ? 10000 : 300000; // 10s in dev, 5min in prod
-                    setInterval(() => {
-                      registration.update();
-                    }, updateInterval);
-
-                    // Handle controller change
-                    navigator.serviceWorker.addEventListener('controllerchange', function() {
-                      console.log('[App] Service Worker controller changed, reloading...');
-                      window.location.reload();
+                      console.log('[App] Service Worker update found');
                     });
 
                   } catch (error) {
                     console.error('[App] Service Worker registration failed:', error);
                   }
                 });
-
-                // Development mode helpers
-                if (isDev) {
-                  window.clearAppCache = async function() {
-                    try {
-                      const cacheNames = await caches.keys();
-                      await Promise.all(cacheNames.map(name => caches.delete(name)));
-                      const registrations = await navigator.serviceWorker.getRegistrations();
-                      await Promise.all(registrations.map(reg => reg.unregister()));
-                      console.log('[App] Cache cleared manually');
-                    } catch (error) {
-                      console.error('[App] Failed to clear cache:', error);
-                    }
-                  };
-
-                  window.forceAppRefresh = function() {
-                    window.clearAppCache().then(() => {
-                      console.log('[App] Force refreshing...');
-                      window.location.reload();
-                    });
-                  };
-
-                  // Keyboard shortcut: Ctrl/Cmd + Shift + Delete to clear cache
-                  document.addEventListener('keydown', function(e) {
-                    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Delete') {
-                      e.preventDefault();
-                      console.log('[App] Keyboard shortcut triggered - clearing cache');
-                      window.forceAppRefresh();
-                    }
-                  });
-
-                  console.log('[App] Development helpers loaded. Use clearAppCache() or forceAppRefresh() in console, or Ctrl/Cmd+Shift+Delete');
-                }
               }
             `,
           }}
