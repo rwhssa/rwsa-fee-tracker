@@ -413,7 +413,13 @@
 }
 /* Mobile table optimizations */
 .table-cell {
-    @apply px-2 py-3 text-sm;
+    @apply px-3 py-3 text-sm;
+    transform: translateZ(0);
+}
+
+/* Special padding for class column */
+.table-cell-class {
+    @apply py-3 pl-4 pr-3 text-sm;
     transform: translateZ(0);
 }
 
@@ -431,14 +437,17 @@
 }
 
 table {
-    @apply min-w-full;
-    width: 380px; /* Optimized for mobile with wider class column */
+    @apply w-full;
     transform: translateZ(0);
 }
 
-/* Batch mode table adjustments */
-.batch-mode table {
-    width: 420px; /* Extra width for checkbox column and wider class column */
+/* Checkbox styling for batch mode */
+input[type="checkbox"] {
+    @apply bg-gray-700 border-gray-600 text-gray-400 focus:ring-gray-500 focus:ring-2;
+}
+
+input[type="checkbox"]:checked {
+    @apply bg-gray-600 border-gray-500 text-white;
 }
 
 /* Filter dropdowns for mobile */

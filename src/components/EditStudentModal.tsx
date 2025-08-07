@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { type Student } from "@/lib/utils";
 
 interface EditStudentModalProps {
@@ -23,8 +24,14 @@ export default function EditStudentModal({
     status: "",
   });
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const statusOptions = ["已繳納", "有會員資格（但未繳納）", "未繳納"] as const;
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (student) {
@@ -64,12 +71,19 @@ export default function EditStudentModal({
     }
   };
 
-  if (!isOpen || !student) return null;
+  if (!isOpen || !student || !mounted) return null;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ paddingBottom: "100px" }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        paddingBottom: "100px",
+      }}
     >
       {/* Backdrop */}
       <div
@@ -78,9 +92,17 @@ export default function EditStudentModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-gray-900 rounded-2xl border border-gray-800 p-6 max-h-[70vh] overflow-y-auto">
+      <div
+        className="relative w-full max-w-sm sm:max-w-md bg-gray-900 rounded-2xl border border-gray-800 p-4 sm:p-6 max-h-[75vh] overflow-y-auto mx-auto"
+        style={{
+          minWidth: "280px",
+          maxHeight: "80vh",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             編輯學生資料
           </h2>
@@ -107,14 +129,14 @@ export default function EditStudentModal({
         </div>
 
         {/* Form */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               班級
             </label>
             <input
               type="text"
-              className="input w-full text-base"
+              className="input w-full text-sm sm:text-base"
               value={editValues.class}
               onChange={(e) =>
                 setEditValues((prev) => ({
@@ -153,7 +175,7 @@ export default function EditStudentModal({
             </label>
             <input
               type="text"
-              className="input w-full text-base"
+              className="input w-full text-sm sm:text-base"
               value={editValues.name}
               onChange={(e) =>
                 setEditValues((prev) => ({
@@ -171,7 +193,7 @@ export default function EditStudentModal({
               繳費狀態
             </label>
             <select
-              className="input w-full text-base"
+              className="input w-full text-sm sm:text-base"
               value={editValues.status}
               onChange={(e) =>
                 setEditValues((prev) => ({
@@ -192,18 +214,18 @@ export default function EditStudentModal({
         </div>
 
         {/* Actions */}
-        <div className="flex space-x-3 mt-6 pt-4 border-t border-gray-800">
+        <div className="flex space-x-2 sm:space-x-3 mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-800">
           <button
             onClick={handleClose}
             disabled={saving}
-            className="flex-1 btn-ghost disabled:opacity-50 py-3 text-base"
+            className="flex-1 btn-ghost disabled:opacity-50 py-2 sm:py-3 text-sm sm:text-base"
           >
             取消
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 btn-primary disabled:opacity-50 py-3 text-base"
+            className="flex-1 btn-primary disabled:opacity-50 py-2 sm:py-3 text-sm sm:text-base"
           >
             {saving ? (
               <div className="flex items-center justify-center space-x-2">
@@ -218,4 +240,6 @@ export default function EditStudentModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

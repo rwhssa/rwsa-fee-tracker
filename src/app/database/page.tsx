@@ -477,15 +477,19 @@ export default function DatabasePage() {
               />
             </div>
           ) : (
-            <div className={isBatchMode ? "batch-mode" : ""}>
+            <div className={`${isBatchMode ? "batch-mode" : ""}`}>
               <table
-                className={`w-full text-sm bg-gray-900/40 border border-gray-800/50 ${isBatchMode ? "rounded-b-2xl" : "rounded-t-2xl"}`}
+                className={`w-full text-sm bg-gray-900/40 border border-gray-800/50 ${isBatchMode ? "rounded-b-2xl" : "rounded-2xl"}`}
+                style={{ minWidth: isBatchMode ? "320px" : "250px" }}
               >
                 {/* Table Header */}
                 <thead className="bg-gray-900/80 sticky top-0 z-20">
                   <tr>
                     {isBatchMode && (
-                      <th className="table-cell text-center border-b border-gray-800 w-12">
+                      <th
+                        className="table-cell text-center border-b border-gray-800"
+                        style={{ width: "8%" }}
+                      >
                         <input
                           type="checkbox"
                           checked={
@@ -508,11 +512,17 @@ export default function DatabasePage() {
                               handleDeselectAll();
                             }
                           }}
-                          className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                          className="w-4 h-4 text-gray-400 bg-gray-700 border-gray-600 rounded focus:ring-gray-500 focus:ring-2 checked:bg-gray-600 checked:border-gray-500"
                         />
                       </th>
                     )}
-                    <th className="table-cell text-center border-b border-gray-800 w-24">
+                    <th
+                      className="table-cell text-center border-b border-gray-800"
+                      style={{
+                        width: isBatchMode ? "10%" : "12%",
+                        paddingLeft: "1rem",
+                      }}
+                    >
                       <div className="relative" ref={classFilterRef}>
                         <div className="flex items-center justify-center space-x-1">
                           <button
@@ -573,7 +583,10 @@ export default function DatabasePage() {
                         )}
                       </div>
                     </th>
-                    <th className="table-cell text-center border-b border-gray-800 w-20">
+                    <th
+                      className="table-cell text-center border-b border-gray-800"
+                      style={{ width: isBatchMode ? "33%" : "44%" }}
+                    >
                       <button
                         onClick={() => handleSort("studentId")}
                         className="flex items-center justify-center space-x-1 text-gray-300 hover:text-white w-full"
@@ -586,7 +599,10 @@ export default function DatabasePage() {
                         )}
                       </button>
                     </th>
-                    <th className="table-cell text-center border-b border-gray-800 w-20">
+                    <th
+                      className="table-cell text-center border-b border-gray-800"
+                      style={{ width: isBatchMode ? "32%" : "29%" }}
+                    >
                       <button
                         onClick={() => handleSort("name")}
                         className="flex items-center justify-center space-x-1 text-gray-300 hover:text-white w-full"
@@ -599,7 +615,10 @@ export default function DatabasePage() {
                         )}
                       </button>
                     </th>
-                    <th className="table-cell text-center border-b border-gray-800 w-28">
+                    <th
+                      className="table-cell text-center border-b border-gray-800"
+                      style={{ width: isBatchMode ? "25%" : "25%" }}
+                    >
                       <div className="relative" ref={statusFilterRef}>
                         <div className="flex items-center justify-center space-x-1">
                           <button
@@ -661,9 +680,10 @@ export default function DatabasePage() {
                       </div>
                     </th>
                     {!isBatchMode && (
-                      <th className="table-cell text-center border-b border-gray-800 w-14">
-                        <span className="text-gray-300">操作</span>
-                      </th>
+                      <th
+                        className="table-cell text-center border-b border-gray-800"
+                        style={{ width: "10%" }}
+                      ></th>
                     )}
                   </tr>
                 </thead>
@@ -685,27 +705,27 @@ export default function DatabasePage() {
                           } ${isSelected ? "selected" : ""}`}
                         >
                           {isBatchMode && (
-                            <td className="table-cell text-center w-12">
+                            <td className="table-cell text-center">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={(e) =>
                                   handleStudentSelect(student, e.target.checked)
                                 }
-                                className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                                className="w-4 h-4 text-gray-400 bg-gray-700 border-gray-600 rounded focus:ring-gray-500 focus:ring-2 checked:bg-gray-600 checked:border-gray-500"
                               />
                             </td>
                           )}
-                          <td className="table-cell text-white text-center truncate w-24">
+                          <td className="table-cell text-white text-center truncate">
                             {student.class}
                           </td>
-                          <td className="table-cell text-gray-300 font-mono text-xs text-center truncate w-24">
+                          <td className="table-cell text-gray-300 font-mono text-xs text-center truncate">
                             {student.studentId}
                           </td>
-                          <td className="table-cell text-white text-center truncate w-20">
+                          <td className="table-cell text-white text-center truncate">
                             {student.name}
                           </td>
-                          <td className="table-cell text-center w-28">
+                          <td className="table-cell text-center">
                             <span
                               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusStyle(student.status)}`}
                             >
@@ -713,7 +733,7 @@ export default function DatabasePage() {
                             </span>
                           </td>
                           {!isBatchMode && (
-                            <td className="table-cell text-center w-14">
+                            <td className="table-cell text-center">
                               <button
                                 onClick={() => handleEditStudent(student)}
                                 className="text-gray-400 hover:text-white p-1.5 rounded hover:bg-gray-800 transition-colors"
