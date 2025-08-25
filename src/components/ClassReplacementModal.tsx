@@ -28,7 +28,7 @@ export type OperationReasonCode =
 
 interface ClassReplacementModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  closeAction: () => void;
   academicYears: number[];
   currentYear: number;
   students: Student[];
@@ -73,7 +73,7 @@ type Stage = "form" | "parsing" | "preview" | "submitting" | "result";
 
 export default function ClassReplacementModal({
   isOpen,
-  onClose,
+  closeAction,
   academicYears,
   currentYear,
   students,
@@ -131,7 +131,7 @@ export default function ClassReplacementModal({
 
   const handleClose = () => {
     if (stage === "submitting") return;
-    onClose();
+    closeAction();
     setTimeout(() => resetAll(), 200);
   };
 

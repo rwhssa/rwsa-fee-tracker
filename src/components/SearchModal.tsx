@@ -8,10 +8,10 @@ import { type Student } from "@/lib/utils";
 
 export default function SearchModal({
   isOpen,
-  onClose,
+  closeAction,
 }: {
   isOpen: boolean;
-  onClose: () => void;
+  closeAction: () => void;
 }) {
   const [studentId, setStudentId] = useState("");
   const [student, setStudent] = useState<Student | null>(null);
@@ -49,7 +49,7 @@ export default function SearchModal({
     setStudentId("");
     setStudent(null);
     setSearched(false);
-    onClose();
+    closeAction();
   };
 
   const getStatusStyle = (status: string | null) => {

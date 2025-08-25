@@ -7,14 +7,14 @@ import { type Student } from "@/lib/utils";
 interface EditStudentModalProps {
   isOpen: boolean;
   student: Student | null;
-  onClose: () => void;
+  closeAction: () => void;
   onSave: (studentId: string, updates: Partial<Student>) => Promise<void>;
 }
 
 export default function EditStudentModal({
   isOpen,
   student,
-  onClose,
+  closeAction,
   onSave,
 }: EditStudentModalProps) {
   const [editValues, setEditValues] = useState({
@@ -60,7 +60,7 @@ export default function EditStudentModal({
       };
 
       await onSave(student.id, updates);
-      onClose();
+      closeAction();
     } catch (error) {
       console.error("Error saving student:", error);
     } finally {
@@ -70,7 +70,7 @@ export default function EditStudentModal({
 
   const handleClose = () => {
     if (!saving) {
-      onClose();
+      closeAction();
     }
   };
 

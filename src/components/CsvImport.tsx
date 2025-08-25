@@ -12,7 +12,11 @@ interface CsvRow {
   status?: string; // Optional, as it might not be in every CSV
 }
 
-export default function CsvImport({ onClose }: { onClose: () => void }) {
+export default function CsvImport({
+  closeAction,
+}: {
+  closeAction: () => void;
+}) {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +35,7 @@ export default function CsvImport({ onClose }: { onClose: () => void }) {
         console.log("Parsed CSV data:", results.data);
         await uploadToFirestore(results.data);
         setIsUploading(false);
-        onClose();
+        closeAction();
       },
       error: (error: Error) => {
         console.error("Error parsing CSV:", error);

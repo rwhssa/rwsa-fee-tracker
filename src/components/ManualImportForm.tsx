@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
-export default function ManualImportForm({ onClose }: { onClose: () => void }) {
-  const [studentClass, setStudentClass] = useState('');
-  const [studentId, setStudentId] = useState('');
-  const [studentName, setStudentName] = useState('');
-  const [status, setStatus] = useState('未繳納');
+export default function ManualImportForm({
+  closeAction,
+}: {
+  closeAction: () => void;
+}) {
+  const [studentClass, setStudentClass] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [status, setStatus] = useState("未繳納");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,22 +21,22 @@ export default function ManualImportForm({ onClose }: { onClose: () => void }) {
 
     try {
       const schoolYear = Number(studentId.substring(0, 3));
-      await addDoc(collection(db, 'students'), {
+      await addDoc(collection(db, "students"), {
         class: studentClass,
         studentId,
         name: studentName,
         status,
         schoolYear,
       });
-      setStudentClass('');
-      setStudentId('');
-      setStudentName('');
-      setStatus('未繳納');
-      alert('學生資料已成功新增！');
-      onClose();
+      setStudentClass("");
+      setStudentId("");
+      setStudentName("");
+      setStatus("未繳納");
+      alert("學生資料已成功新增！");
+      closeAction();
     } catch (error) {
       console.error("Error adding document: ", error);
-      alert('新增學生資料時發生錯誤，請查看 console。');
+      alert("新增學生資料時發生錯誤，請查看 console。");
     } finally {
       setIsSubmitting(false);
     }
@@ -41,7 +45,12 @@ export default function ManualImportForm({ onClose }: { onClose: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="class" className="block mb-2 text-sm font-medium text-gray-300">班級</label>
+        <label
+          htmlFor="class"
+          className="block mb-2 text-sm font-medium text-gray-300"
+        >
+          班級
+        </label>
         <input
           type="text"
           id="class"
@@ -52,7 +61,12 @@ export default function ManualImportForm({ onClose }: { onClose: () => void }) {
         />
       </div>
       <div>
-        <label htmlFor="studentId" className="block mb-2 text-sm font-medium text-gray-300">學號</label>
+        <label
+          htmlFor="studentId"
+          className="block mb-2 text-sm font-medium text-gray-300"
+        >
+          學號
+        </label>
         <input
           type="text"
           id="studentId"
@@ -65,7 +79,12 @@ export default function ManualImportForm({ onClose }: { onClose: () => void }) {
         />
       </div>
       <div>
-        <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-300">姓名</label>
+        <label
+          htmlFor="name"
+          className="block mb-2 text-sm font-medium text-gray-300"
+        >
+          姓名
+        </label>
         <input
           type="text"
           id="name"
@@ -76,7 +95,12 @@ export default function ManualImportForm({ onClose }: { onClose: () => void }) {
         />
       </div>
       <div>
-        <label htmlFor="status" className="block mb-2 text-sm font-medium text-gray-300">繳納狀態</label>
+        <label
+          htmlFor="status"
+          className="block mb-2 text-sm font-medium text-gray-300"
+        >
+          繳納狀態
+        </label>
         <select
           id="status"
           value={status}
@@ -93,7 +117,7 @@ export default function ManualImportForm({ onClose }: { onClose: () => void }) {
         disabled={isSubmitting}
         className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-gray-500"
       >
-        {isSubmitting ? '新增中...' : '新增學生'}
+        {isSubmitting ? "新增中..." : "新增學生"}
       </button>
     </form>
   );

@@ -912,14 +912,14 @@ export default function DatabasePage() {
         {/* Import Modal */}
         <ImportModal
           isOpen={isImportModalOpen}
-          onClose={() => setIsImportModalOpen(false)}
+          closeAction={() => setIsImportModalOpen(false)}
         />
 
         {/* Edit Modal */}
         <EditStudentModal
           isOpen={isEditModalOpen}
           student={selectedStudent}
-          onClose={() => {
+          closeAction={() => {
             setIsEditModalOpen(false);
             setSelectedStudent(null);
           }}
@@ -927,7 +927,7 @@ export default function DatabasePage() {
         />
         <ClassReplacementModal
           isOpen={isClassReplaceOpen}
-          onClose={() => setIsClassReplaceOpen(false)}
+          closeAction={() => setIsClassReplaceOpen(false)}
           academicYears={activeAcademicYearOptions}
           currentYear={currentAcademicYear}
           students={students}

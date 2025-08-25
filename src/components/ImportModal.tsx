@@ -7,10 +7,10 @@ import CsvImport from "./CsvImport";
 
 export default function ImportModal({
   isOpen,
-  onClose,
+  closeAction,
 }: {
   isOpen: boolean;
-  onClose: () => void;
+  closeAction: () => void;
 }) {
   const [view, setView] = useState("main"); // main, csv, manual
   const [mounted, setMounted] = useState(false);
@@ -22,7 +22,7 @@ export default function ImportModal({
 
   const handleClose = () => {
     setView("main");
-    onClose();
+    closeAction();
   };
 
   if (!isOpen || !mounted) return null;
@@ -69,7 +69,7 @@ export default function ImportModal({
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 text-center">
               CSV 匯入
             </h2>
-            <CsvImport onClose={handleClose} />
+            <CsvImport closeAction={handleClose} />
           </>
         )}
 
@@ -78,7 +78,7 @@ export default function ImportModal({
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 text-center">
               手動建檔
             </h2>
-            <ManualImportForm onClose={handleClose} />
+            <ManualImportForm closeAction={handleClose} />
           </>
         )}
 

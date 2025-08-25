@@ -98,7 +98,7 @@ const DesktopBottomNav = () => {
       {/* Search Modal */}
       <SearchModal
         isOpen={isSearchModalOpen}
-        onClose={() => setIsSearchModalOpen(false)}
+        closeAction={() => setIsSearchModalOpen(false)}
       />
     </>
   );
