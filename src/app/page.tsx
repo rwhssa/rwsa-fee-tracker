@@ -7,17 +7,15 @@ import AnnualPaymentChart from "@/components/AnnualPaymentChart";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ChartLoadingSpinner from "@/components/ChartLoadingSpinner";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { getCurrentAcademicYear } from "@/lib/utils";
+import StudentStatsPanel from "@/components/StudentStatsPanel";
 
 type ViewMode = "current" | "all";
 type LineChartViewMode = "count" | "percentage";
 
 export default function Home() {
-  const [totalStudents, setTotalStudents] = useState(0);
-  const [paidStudents, setPaidStudents] = useState(0);
-  const [exemptStudents, setExemptStudents] = useState(0);
-  const [unpaidStudents, setUnpaidStudents] = useState(0);
+  const [studentsData, setStudentsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartViewMode, setChartViewMode] = useState<ViewMode>("all");
   const [lineChartViewMode, setLineChartViewMode] =
@@ -30,19 +28,7 @@ export default function Home() {
         const studentsCollection = collection(db, "students");
         const querySnapshot = await getDocs(studentsCollection);
         const students = querySnapshot.docs.map((doc) => doc.data());
-
-        setTotalStudents(students.length);
-        setPaidStudents(
-          students.filter((student) => student.status === "已繳納").length,
-        );
-        setExemptStudents(
-          students.filter(
-            (student) => student.status === "有會員資格（但未繳納）",
-          ).length,
-        );
-        setUnpaidStudents(
-          students.filter((student) => student.status === "未繳納").length,
-        );
+        setStudentsData(students as any);
       } catch (error) {
         console.error("Error fetching student stats: ", error);
       } finally {
@@ -69,33 +55,12 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Key Statistics */}
-          <div className="grid grid-cols-2 gap-5 mb-8">
-            <div className="card">
-              <div className="text-sm text-gray-400 mb-3 font-medium">
-                在學學生人數
-              </div>
-              <div className="text-2xl font-bold text-white flex items-center min-h-[2.5rem]">
-                {loading ? (
-                  <LoadingSpinner size="sm" variant="dots" />
-                ) : (
-                  `${totalStudents} 人`
-                )}
-              </div>
-            </div>
-            <div className="card">
-              <div className="text-sm text-gray-400 mb-3 font-medium">
-                已繳納人數
-              </div>
-              <div className="text-2xl font-bold text-green-400 flex items-center min-h-[2.5rem]">
-                {loading ? (
-                  <LoadingSpinner size="sm" variant="dots" />
-                ) : (
-                  `${paidStudents} 人`
-                )}
-              </div>
-            </div>
-          </div>
+          <StudentStatsPanel
+            students={studentsData as any}
+            loading={loading}
+            metrics={["total", "paid"]}
+            className="mb-8"
+          />
         </div>
 
         {/* Fee Payment Overview Charts */}

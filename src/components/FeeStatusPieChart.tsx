@@ -52,13 +52,17 @@ export default function FeeStatusPieChart({
       const filteredStudents =
         viewMode === "current"
           ? students.filter(
-              (student) => student.schoolYear === currentAcademicYear,
+              (student) =>
+                !student.isWithdrawn &&
+                student.schoolYear === currentAcademicYear,
             )
           : students.filter((student) => {
-              // Include all currently enrolled students (not graduated)
+              // Include all currently enrolled students (not graduated) and not withdrawn
               const studentYear = student.schoolYear;
               const yearsElapsed = currentAcademicYear - studentYear;
-              return yearsElapsed >= 0 && yearsElapsed < 3; // High school is 3 years
+              return (
+                !student.isWithdrawn && yearsElapsed >= 0 && yearsElapsed < 3
+              ); // High school is 3 years
             });
 
       const statusCounts: { [key: string]: number } = filteredStudents.reduce(

@@ -6,7 +6,8 @@ import ImportModal from "@/components/ImportModal";
 import EditStudentModal from "@/components/EditStudentModal";
 import BatchOperationBar from "@/components/BatchOperationBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import ChartLoadingSpinner from "@/components/ChartLoadingSpinner";
+import ClassReplacementModal from "@/components/ClassReplacementModal";
+import StudentStatsPanel from "@/components/StudentStatsPanel";
 import { db } from "@/lib/firebase";
 import {
   collection,
@@ -23,8 +24,65 @@ import {
   getGradeStatus,
   getStatusStyle,
   getShortStatus,
+  formatAcademicYearLabel,
   type Student,
 } from "@/lib/utils";
+
+// Filtering / sorting helpers (kept in same file to minimize surface change)
+const STATUS_OPTIONS = ["已繳納", "有會員資格（但未繳納）", "未繳納"] as const;
+
+interface FilterParams {
+  yearFilter: string;
+  statusFilter: string;
+  classFilter: string;
+  searchTerm: string;
+  showWithdrawn: boolean;
+}
+
+type StudentSortKey = keyof Student | "status" | "class" | "name" | "studentId";
+type StudentSortConfig = { key: StudentSortKey; direction: "asc" | "desc" };
+
+function applyFilters(students: Student[], params: FilterParams): Student[] {
+  const term = params.searchTerm.toLowerCase();
+  return students.filter((s) => {
+    if (
+      params.yearFilter !== "all" &&
+      s.schoolYear !== Number(params.yearFilter)
+    )
+      return false;
+    if (params.statusFilter !== "all" && s.status !== params.statusFilter)
+      return false;
+    if (params.classFilter !== "all" && s.class !== params.classFilter)
+      return false;
+    if (!params.showWithdrawn && s.isWithdrawn) return false;
+    if (term) {
+      if (
+        !s.name.toLowerCase().includes(term) &&
+        !s.studentId.includes(term) &&
+        !s.class.toLowerCase().includes(term)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function sortStudents(
+  list: Student[],
+  sortConfig: StudentSortConfig | null,
+): Student[] {
+  if (!sortConfig) return list;
+  return [...list].sort((a, b) => {
+    const aRaw = (a as any)[sortConfig.key];
+    const bRaw = (b as any)[sortConfig.key];
+    const aVal = aRaw == null ? "" : String(aRaw);
+    const bVal = bRaw == null ? "" : String(bRaw);
+    if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+}
 
 export default function DatabasePage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -46,13 +104,15 @@ export default function DatabasePage() {
   const [classFilter, setClassFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>({ key: "class", direction: "asc" });
+  const [sortConfig, setSortConfig] = useState<StudentSortConfig | null>({
+    key: "class",
+    direction: "asc",
+  });
 
   const [showClassFilter, setShowClassFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const [showWithdrawn, setShowWithdrawn] = useState(false);
+  const [isClassReplaceOpen, setIsClassReplaceOpen] = useState(false);
 
   const classFilterRef = useRef<HTMLDivElement>(null);
   const statusFilterRef = useRef<HTMLDivElement>(null);
@@ -83,52 +143,24 @@ export default function DatabasePage() {
   }, []);
 
   useEffect(() => {
-    let filtered = [...students];
-
-    if (yearFilter !== "all") {
-      filtered = filtered.filter(
-        (student) => student.schoolYear === Number(yearFilter),
-      );
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((student) => student.status === statusFilter);
-    }
-
-    if (classFilter !== "all") {
-      filtered = filtered.filter((student) => student.class === classFilter);
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (student) =>
-          student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.studentId.includes(searchTerm) ||
-          student.class.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-    }
-
-    if (sortConfig) {
-      filtered.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof Student];
-        const bValue = b[sortConfig.key as keyof Student];
-
-        if (aValue === null && bValue === null) return 0;
-        if (aValue === null) return sortConfig.direction === "asc" ? 1 : -1;
-        if (bValue === null) return sortConfig.direction === "asc" ? -1 : 1;
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    setFilteredStudents(filtered);
-  }, [students, yearFilter, statusFilter, classFilter, searchTerm, sortConfig]);
+    const filtered = applyFilters(students, {
+      yearFilter,
+      statusFilter,
+      classFilter,
+      searchTerm,
+      showWithdrawn,
+    });
+    const sorted = sortStudents(filtered, sortConfig);
+    setFilteredStudents(sorted);
+  }, [
+    students,
+    yearFilter,
+    statusFilter,
+    classFilter,
+    searchTerm,
+    sortConfig,
+    showWithdrawn,
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -152,7 +184,7 @@ export default function DatabasePage() {
     };
   }, []);
 
-  const handleSort = (key: string) => {
+  const handleSort = (key: StudentSortKey) => {
     setSortConfig((current) => {
       if (current?.key === key) {
         return {
@@ -290,7 +322,73 @@ export default function DatabasePage() {
     new Set(students.map((s) => s.class)),
   ).sort();
 
-  const statusOptions = ["已繳納", "有會員資格（但未繳納）", "未繳納"] as const;
+  const statusOptions = STATUS_OPTIONS;
+  const [splitOpen, setSplitOpen] = useState(false);
+  const activeAcademicYearOptions = academicYearOptions.filter(
+    (y) => currentAcademicYear - y <= 2,
+  );
+
+  const handleClassReplaceConfirm = async ({
+    updates,
+    withdrawals,
+    summary,
+  }: {
+    targetYear: number;
+    unlistedStrategy: string;
+    updates: {
+      studentId: string;
+      afterClass: string | null;
+      action: "update" | "withdraw" | "none";
+    }[];
+    withdrawals: {
+      studentId: string;
+      afterClass: string | null;
+      action: "update" | "withdraw" | "none";
+    }[];
+    ignored: any[];
+    summary: { updateCount: number; withdrawalCount: number };
+  }) => {
+    try {
+      const batch = writeBatch(db);
+      updates.forEach((op) => {
+        if (op.studentId && op.afterClass) {
+          batch.update(doc(db, "students", op.studentId), {
+            class: op.afterClass,
+            isWithdrawn: false,
+          });
+        }
+      });
+      withdrawals.forEach((op) => {
+        if (op.studentId) {
+          batch.update(doc(db, "students", op.studentId), {
+            isWithdrawn: true,
+          });
+        }
+      });
+      await batch.commit();
+      setStudents((prev) =>
+        prev.map((s) => {
+          const u = updates.find((o) => o.studentId === s.id);
+          if (u && u.afterClass) {
+            return { ...s, class: u.afterClass, isWithdrawn: false };
+          }
+          const w = withdrawals.find((o) => o.studentId === s.id);
+          if (w) {
+            return { ...s, isWithdrawn: true };
+          }
+          return s;
+        }),
+      );
+      setSuccessMessage(
+        `編班替換完成：更新 ${summary.updateCount} 筆，標記已離校 ${summary.withdrawalCount} 筆`,
+      );
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (e) {
+      console.error("Class replacement failed", e);
+      setErrorMessage("編班替換失敗，請稍後重試");
+      setTimeout(() => setErrorMessage(""), 5000);
+    }
+  };
 
   return (
     <ProtectedRoute>
@@ -302,72 +400,101 @@ export default function DatabasePage() {
               <h1 className="text-2xl font-bold text-white mb-1">資料庫</h1>
               <p className="text-gray-400 text-sm">學生資料管理系統</p>
             </div>
-            <div className="flex space-x-2 mr-2">
+            <div className="flex space-x-2 mr-2 relative">
               <button
                 onClick={enterBatchMode}
                 className="btn-secondary text-sm px-3 py-2"
               >
                 批次操作
               </button>
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="btn-primary text-sm px-3 py-2"
-              >
-                匯入資料
-              </button>
+
+              {/* Split Button */}
+              <div className="relative">
+                <div className="flex">
+                  <button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="btn-primary text-sm px-3 py-2 rounded-r-none"
+                  >
+                    匯入資料
+                  </button>
+                  <button
+                    onClick={() => setSplitOpen((v: boolean) => !v)}
+                    className="btn-primary rounded-l-none border-l border-blue-400/40 flex items-center justify-center flex-none w-8 min-w-8 h-full px-0"
+                    aria-label="更多操作"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 9l6 6 6-6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {splitOpen && (
+                  <>
+                    <div className="absolute right-0 mt-1 w-28 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-40 overflow-hidden backdrop-blur-sm">
+                      <button
+                        onClick={() => {
+                          setIsClassReplaceOpen(true);
+                          setSplitOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-3 text-xs font-medium text-gray-200 hover:bg-gray-800 transition"
+                      >
+                        編班替換
+                      </button>
+                    </div>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setSplitOpen(false)}
+                    />
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-gray-900/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-400 mb-2">總學生數</div>
-              <div className="text-2xl font-bold text-white">
-                {students.length}
-              </div>
-            </div>
-            <div className="bg-gray-900/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-400 mb-2">已繳費</div>
-              <div className="text-2xl font-bold text-green-400">
-                {students.filter((s) => s.status === "已繳納").length}
-              </div>
-            </div>
-            <div className="bg-gray-900/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-400 mb-2">未繳費</div>
-              <div className="text-2xl font-bold text-red-400">
-                {students.filter((s) => s.status === "未繳納").length}
-              </div>
-            </div>
-            <div className="bg-gray-900/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-400 mb-2">繳費率</div>
-              <div className="text-2xl font-bold text-blue-400">
-                {students.length > 0
-                  ? Math.round(
-                      (students.filter((s) => s.status === "已繳納").length /
-                        students.length) *
-                        100,
-                    )
-                  : 0}
-                %
-              </div>
-            </div>
-          </div>
+          <StudentStatsPanel
+            students={students as any}
+            loading={loading}
+            metrics={["total", "paid", "unpaid", "rate"]}
+            className="mb-4"
+          />
 
           {/* Filters */}
           <div className="space-y-3 mb-4">
-            {/* Year Filter */}
-            <select
-              className="w-full text-sm bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700"
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
-            >
-              <option value="all">所有學年度</option>
-              {academicYearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year} ({getGradeStatus(year, currentAcademicYear)})
-                </option>
-              ))}
-            </select>
+            {/* Year Filter + Withdrawn Toggle */}
+            <div className="flex items-center space-x-2">
+              <select
+                className="flex-1 text-sm bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700"
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+              >
+                <option value="all">所有學年度</option>
+                {academicYearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {formatAcademicYearLabel(year, currentAcademicYear)}
+                  </option>
+                ))}
+              </select>
+              <label className="flex items-center space-x-1 text-xs bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showWithdrawn}
+                  onChange={(e) => setShowWithdrawn(e.target.checked)}
+                  className="w-3 h-3 accent-blue-500"
+                />
+                <span className="text-gray-300">顯示已離校</span>
+              </label>
+            </div>
 
             {/* Search */}
             <input
@@ -381,10 +508,13 @@ export default function DatabasePage() {
 
           <div className="text-xs text-gray-400 mb-4">
             顯示 {filteredStudents.length} / {students.length} 筆資料
-            {(classFilter !== "all" || statusFilter !== "all") && (
+            {(classFilter !== "all" ||
+              statusFilter !== "all" ||
+              !showWithdrawn) && (
               <span className="ml-2 text-blue-400">
                 (已套用篩選: {classFilter !== "all" && `班級=${classFilter}`}{" "}
-                {statusFilter !== "all" && `狀態=${statusFilter}`})
+                {statusFilter !== "all" && `狀態=${statusFilter}`}{" "}
+                {!showWithdrawn && "未顯示已離校"})
               </span>
             )}
           </div>
@@ -794,6 +924,14 @@ export default function DatabasePage() {
             setSelectedStudent(null);
           }}
           onSave={updateStudent}
+        />
+        <ClassReplacementModal
+          isOpen={isClassReplaceOpen}
+          onClose={() => setIsClassReplaceOpen(false)}
+          academicYears={activeAcademicYearOptions}
+          currentYear={currentAcademicYear}
+          students={students}
+          onConfirm={handleClassReplaceConfirm}
         />
       </main>
     </ProtectedRoute>

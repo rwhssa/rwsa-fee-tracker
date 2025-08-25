@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import Papa from 'papaparse';
-import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { useState } from "react";
+import Papa from "papaparse";
+import { db } from "@/lib/firebase";
+import { collection, writeBatch, doc } from "firebase/firestore";
 
 interface CsvRow {
   class: string;
@@ -37,24 +37,25 @@ export default function CsvImport({ onClose }: { onClose: () => void }) {
         console.error("Error parsing CSV:", error);
         alert("CSV 解析失敗，請檢查檔案格式或 console。");
         setIsUploading(false);
-      }
+      },
     });
   };
 
   const uploadToFirestore = async (data: CsvRow[]) => {
     const batch = writeBatch(db);
-    const studentsCollection = collection(db, 'students');
+    const studentsCollection = collection(db, "students");
 
     data.forEach((row) => {
       if (row.studentId && row.class && row.name) {
         const studentRef = doc(studentsCollection, row.studentId); // Use studentId as document ID
         const schoolYear = Number(String(row.studentId).substring(0, 3));
-        batch.set(studentRef, { 
+        batch.set(studentRef, {
           class: row.class,
           studentId: row.studentId,
           name: row.name,
-          status: row.status || '未繳納',
-          schoolYear: schoolYear
+          status: row.status || "未繳納",
+          schoolYear: schoolYear,
+          isWithdrawn: false,
         });
       } else {
         console.warn("Skipping row due to missing data:", row);
@@ -73,10 +74,16 @@ export default function CsvImport({ onClose }: { onClose: () => void }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-400">
-        請選擇一個 CSV 檔案進行匯入。CSV 檔案必須包含 `class`, `studentId`, `name` 這三個欄位。
+        請選擇一個 CSV 檔案進行匯入。CSV 檔案必須包含 `class`, `studentId`,
+        `name` 這三個欄位。
       </p>
       <div>
-        <label htmlFor="csv-file" className="block mb-2 text-sm font-medium text-gray-300">CSV 檔案</label>
+        <label
+          htmlFor="csv-file"
+          className="block mb-2 text-sm font-medium text-gray-300"
+        >
+          CSV 檔案
+        </label>
         <input
           type="file"
           id="csv-file"

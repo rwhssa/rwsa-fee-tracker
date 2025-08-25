@@ -49,22 +49,24 @@ export default function AnnualPaymentChart({
           total: number;
           paymentRate: number;
         };
-      } = students.reduce((acc, student) => {
-        const year = student.schoolYear;
-        if (!acc[year]) {
-          acc[year] = {
-            year: `${year} 學年度`,
-            paid: 0,
-            total: 0,
-            paymentRate: 0,
-          };
-        }
-        acc[year].total++;
-        if (student.status === "已繳納") {
-          acc[year].paid++;
-        }
-        return acc;
-      }, {});
+      } = students
+        .filter((student) => !student.isWithdrawn)
+        .reduce((acc, student) => {
+          const year = student.schoolYear;
+          if (!acc[year]) {
+            acc[year] = {
+              year: `${year} 學年度`,
+              paid: 0,
+              total: 0,
+              paymentRate: 0,
+            };
+          }
+          acc[year].total++;
+          if (student.status === "已繳納") {
+            acc[year].paid++;
+          }
+          return acc;
+        }, {});
 
       // Calculate payment rates
       Object.values(yearlyData).forEach((data) => {

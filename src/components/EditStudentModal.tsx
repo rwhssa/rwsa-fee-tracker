@@ -22,6 +22,7 @@ export default function EditStudentModal({
     studentId: "",
     name: "",
     status: "",
+    isWithdrawn: false,
   });
   const [saving, setSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -40,6 +41,7 @@ export default function EditStudentModal({
         studentId: student.studentId,
         name: student.name,
         status: student.status || "",
+        isWithdrawn: student.isWithdrawn ?? false,
       });
     }
   }, [student]);
@@ -54,6 +56,7 @@ export default function EditStudentModal({
         studentId: editValues.studentId,
         name: editValues.name,
         status: (editValues.status as Student["status"]) || null,
+        isWithdrawn: editValues.isWithdrawn,
       };
 
       await onSave(student.id, updates);
@@ -145,7 +148,7 @@ export default function EditStudentModal({
                 }))
               }
               disabled={saving}
-              placeholder="例：高一甲"
+              placeholder="例：401"
             />
           </div>
 
@@ -209,6 +212,26 @@ export default function EditStudentModal({
                   {status}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              是否已離校
+            </label>
+            <select
+              className="input w-full text-sm sm:text-base"
+              value={editValues.isWithdrawn ? "yes" : "no"}
+              onChange={(e) =>
+                setEditValues((prev) => ({
+                  ...prev,
+                  isWithdrawn: e.target.value === "yes",
+                }))
+              }
+              disabled={saving}
+            >
+              <option value="no">否</option>
+              <option value="yes">是</option>
             </select>
           </div>
         </div>
