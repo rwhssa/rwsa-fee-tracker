@@ -234,21 +234,52 @@ export default function ClassReplacementModal({
       }
 
       if (matches.length > 1) {
-        matches.forEach((student) => {
-          listed.push({
-            studentId: student.id,
-            name: student.name,
-            beforeClass: student.class,
-            afterClass: row.newClass,
-            action: "none",
-            isListed: true,
-            reasonCode: "NAME_CLASS_CONFLICT",
-            reasonText: "同名同班衝突",
+        const distinctStudentIds = new Set(matches.map((s) => s.studentId));
+        if (distinctStudentIds.size === matches.length) {
+          matches.forEach((student) => {
+            let action: ClassChangeOperation["action"] = "update";
+            let reasonCode: OperationReasonCode | undefined;
+            let reasonText: string | undefined;
+            if (student.class !== row.oldClass) {
+              action = "none";
+              reasonCode = "OLD_MISMATCH";
+              reasonText = `舊班級不符(現有: ${student.class})`;
+              mismatchCount++;
+            } else if (student.class === row.newClass) {
+              action = "none";
+              reasonCode = "NO_CHANGE";
+              reasonText = "班級未變更";
+            }
+            listed.push({
+              studentId: student.id,
+              name: student.name,
+              beforeClass: student.class,
+              afterClass: row.newClass,
+              action,
+              isListed: true,
+              reasonCode,
+              reasonText,
+            });
+            seenIds.add(student.id);
           });
-          seenIds.add(student.id);
-          conflictCount++;
-        });
-        return;
+          return;
+        } else {
+          matches.forEach((student) => {
+            listed.push({
+              studentId: student.id,
+              name: student.name,
+              beforeClass: student.class,
+              afterClass: row.newClass,
+              action: "none",
+              isListed: true,
+              reasonCode: "NAME_CLASS_CONFLICT",
+              reasonText: "同名同班衝突",
+            });
+            seenIds.add(student.id);
+            conflictCount++;
+          });
+          return;
+        }
       }
 
       const student = matches[0];
