@@ -37,11 +37,11 @@ export default function AboutPage() {
       setIsClearing(false);
     }
   };
-  const [appVersion, setAppVersion] = useState("0.1.0");
+  const [appVersion, setAppVersion] = useState("1.0.0");
   const [gitCommit, setGitCommit] = useState("N/A");
 
   useEffect(() => {
-    setAppVersion(process.env.npm_package_version || "0.1.0");
+    setAppVersion(process.env.npm_package_version || "1.0.0");
     setGitCommit(process.env.NEXT_PUBLIC_GIT_COMMIT || "N/A");
   }, []);
 
