@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ImportModal from "@/components/ImportModal";
 import EditStudentModal from "@/components/EditStudentModal";
@@ -22,7 +22,6 @@ import {
 } from "firebase/firestore";
 import {
   getCurrentAcademicYear,
-  getGradeStatus,
   getStatusStyle,
   getShortStatus,
   formatAcademicYearLabel,
@@ -320,11 +319,31 @@ export default function DatabasePage() {
     new Set(students.map((s) => s.schoolYear)),
   ).sort((a, b) => b - a);
 
-  const uniqueClasses = Array.from(
-    new Set(students.map((s) => s.class)),
-  ).sort();
+  const uniqueClasses = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          students
+            .filter(
+              (s) =>
+                (yearFilter === "all"
+                  ? true
+                  : s.schoolYear === Number(yearFilter)) &&
+                (showWithdrawn ? true : !s.isWithdrawn),
+            )
+            .map((s) => s.class),
+        ),
+      ).sort(),
+    [students, yearFilter, showWithdrawn],
+  );
 
   const statusOptions = STATUS_OPTIONS;
+
+  useEffect(() => {
+    if (classFilter !== "all" && !uniqueClasses.includes(classFilter)) {
+      setClassFilter("all");
+    }
+  }, [yearFilter, uniqueClasses, classFilter]);
   const [splitOpen, setSplitOpen] = useState(false);
   const activeAcademicYearOptions = academicYearOptions.filter(
     (y) => currentAcademicYear - y <= 2,
