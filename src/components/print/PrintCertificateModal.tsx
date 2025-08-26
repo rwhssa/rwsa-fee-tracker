@@ -124,7 +124,8 @@ export default function PrintCertificateModal({
         s.status === "已繳納" &&
         (selectedYear == null || s.schoolYear === selectedYear),
     )
-    .map((s) => ({ id: s.id, name: s.name, class: s.class }));
+    .map((s) => ({ id: s.id, name: s.name, class: s.class }))
+    .sort((a, b) => a.class.localeCompare(b.class));
 
   const certCount = paidStudents.length;
   const totalPages = Math.ceil(certCount / CERTS_PER_PAGE);
