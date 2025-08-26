@@ -564,3 +564,17 @@ input[type="checkbox"]:checked {
         color-scheme: dark;
     }
 }
+
+/* Registered EduKai font for certificate preview to match PDF */
+@font-face {
+    font-family: "EduKai";
+    src: url("/fonts/edukai-5.0.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Utility class to apply EduKai font where needed (e.g., certificate preview) */
+.font-edukai {
+    font-family: "EduKai", "KaiTi", "DFKai-SB", serif;
+}

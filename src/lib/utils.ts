@@ -24,7 +24,7 @@ export const formatAcademicYearLabel = (
   schoolYear: number,
   currentYear: number,
 ): string => {
-  return `${schoolYear} (${getGradeStatus(schoolYear, currentYear)})`;
+  return `${schoolYear} 年 (${getGradeStatus(schoolYear, currentYear)})`;
 };
 
 export const formatStudentId = (studentId: string): string => {

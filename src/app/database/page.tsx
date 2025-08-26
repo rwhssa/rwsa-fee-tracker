@@ -8,6 +8,7 @@ import BatchOperationBar from "@/components/BatchOperationBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ClassReplacementModal from "@/components/ClassReplacementModal";
 import StudentStatsPanel from "@/components/StudentStatsPanel";
+import PrintCertificateModal from "@/components/print/PrintCertificateModal";
 import { db } from "@/lib/firebase";
 import {
   collection,
@@ -113,6 +114,7 @@ export default function DatabasePage() {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [showWithdrawn, setShowWithdrawn] = useState(false);
   const [isClassReplaceOpen, setIsClassReplaceOpen] = useState(false);
+  const [isPrintCertOpen, setIsPrintCertOpen] = useState(false);
 
   const classFilterRef = useRef<HTMLDivElement>(null);
   const statusFilterRef = useRef<HTMLDivElement>(null);
@@ -440,7 +442,7 @@ export default function DatabasePage() {
 
                 {splitOpen && (
                   <>
-                    <div className="absolute right-0 mt-1 w-28 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-40 overflow-hidden backdrop-blur-sm">
+                    <div className="absolute right-0 mt-1 w-36 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-40 overflow-hidden backdrop-blur-sm">
                       <button
                         onClick={() => {
                           setIsClassReplaceOpen(true);
@@ -449,6 +451,15 @@ export default function DatabasePage() {
                         className="w-full text-left px-3 py-3 text-xs font-medium text-gray-200 hover:bg-gray-800 transition"
                       >
                         編班替換
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsPrintCertOpen(true);
+                          setSplitOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-3 text-xs font-medium text-gray-200 hover:bg-gray-800 transition border-t border-gray-800"
+                      >
+                        列印繳費證明
                       </button>
                     </div>
                     <div
@@ -932,6 +943,13 @@ export default function DatabasePage() {
           currentYear={currentAcademicYear}
           students={students}
           onConfirm={handleClassReplaceConfirm}
+        />
+        <PrintCertificateModal
+          isOpen={isPrintCertOpen}
+          closeAction={() => setIsPrintCertOpen(false)}
+          academicYears={academicYearOptions}
+          currentYear={currentAcademicYear}
+          students={students}
         />
       </main>
     </ProtectedRoute>
