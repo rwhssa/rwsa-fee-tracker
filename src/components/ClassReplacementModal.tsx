@@ -171,7 +171,9 @@ export default function ClassReplacementModal({
 
   const buildPreview = useCallback(() => {
     if (stage !== "preview" || targetYear == null) return;
-    const inYear = students.filter((s) => s.schoolYear === targetYear);
+    const inYear = students.filter(
+      (s) => s.schoolYear === targetYear && !s.isWithdrawn,
+    );
     const classNameIndex = new Map<string, Student[]>();
     inYear.forEach((s) => {
       const key = `${s.name}|${s.class}`;
