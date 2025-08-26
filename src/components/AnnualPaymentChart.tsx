@@ -186,6 +186,7 @@ export default function AnnualPaymentChart({
         : 2.5;
     return (
       <g
+        key={ctx.payload?.year ?? ctx.index}
         onMouseEnter={() => !isMobile && setHoverIndex(ctx.index)}
         onMouseLeave={() => !isMobile && setHoverIndex(null)}
         onTouchStart={() => setHoverIndex(ctx.index)}

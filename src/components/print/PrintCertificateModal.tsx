@@ -13,13 +13,15 @@ import { Font } from "@react-pdf/renderer";
 
 Font.register({
   family: "EduKai",
-  src: "/fonts/edukai-5.0.ttf",
-});
-// TODO: Bold weight currently not visually distinct; source font provides only one weight. Consider adding a heavier variant or synthetic emboldening approach later.
-Font.register({
-  family: "EduKai-Bold",
-  src: "/fonts/edukai-5.0.ttf",
-  fontWeight: "bold",
+  // TODO: This font file provides effectively a single visual weight.
+  // react-pdf (pdfkit) does NOT perform synthetic emboldening like the browser.
+  // We register the same file twice (normal + bold) so title styles using
+  // fontWeight:'bold' remain semantically correct, even if visual difference
+  // is minimal. To get a true bold appearance, supply a real bold TTF.
+  fonts: [
+    { src: "/fonts/edukai-5.0.ttf", fontWeight: "normal" },
+    { src: "/fonts/edukai-5.0.ttf", fontWeight: "bold" },
+  ],
 });
 
 interface PrintCertificateModalProps {
@@ -95,7 +97,6 @@ export default function PrintCertificateModal({
 
   const [previewReady, setPreviewReady] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const dynamicDefaultInsta = (): string => {
     const base = getCurrentAcademicYear() + 2;
@@ -138,7 +139,7 @@ export default function PrintCertificateModal({
 
   const buildQr = useCallback(async () => {
     if (!instagramUrl) {
-      setQrDataUrl(null);
+      if (qrDataUrl) setQrDataUrl(null);
       return;
     }
     setGeneratingQr(true);
@@ -149,13 +150,13 @@ export default function PrintCertificateModal({
         errorCorrectionLevel: "M",
         scale: 4,
       });
-      setQrDataUrl(data);
-    } catch (e) {
+      if (data !== qrDataUrl) setQrDataUrl(data);
+    } catch {
       setQrDataUrl(null);
     } finally {
       setGeneratingQr(false);
     }
-  }, [instagramUrl]);
+  }, [instagramUrl, qrDataUrl]);
 
   useEffect(() => {
     if (previewReady) buildQr();
@@ -213,10 +214,6 @@ export default function PrintCertificateModal({
           borderBottom: "0.5pt dashed #000",
           flexDirection: "row",
         },
-        cellBorder: {
-          borderColor: "#000",
-          borderStyle: "dashed",
-        },
         left: {
           width: "65%",
           paddingRight: 6,
@@ -230,7 +227,8 @@ export default function PrintCertificateModal({
           padding: 4,
         },
         title: {
-          fontFamily: "EduKai-Bold",
+          fontFamily: "EduKai",
+          fontWeight: "bold",
           fontSize: 12,
           textAlign: "center",
           letterSpacing: 0.5,
@@ -272,9 +270,7 @@ export default function PrintCertificateModal({
           marginTop: 4,
           textAlign: "center",
         },
-        smallIndent: {
-          marginLeft: 12,
-        },
+
         date: {
           textAlign: "right",
           fontSize: 7,
@@ -295,8 +291,12 @@ export default function PrintCertificateModal({
         idx: number;
       }) => {
         const humanClass = formatClassHuman(student.class);
+        const borderExtras = {
+          borderTop: idx < 2 ? "0.5pt dashed #000" : undefined,
+          borderLeft: idx % 2 === 0 ? "0.5pt dashed #000" : undefined,
+        } as const;
         return (
-          <View style={styles.certCell}>
+          <View style={[styles.certCell, borderExtras]}>
             <View style={styles.left}>
               <View>
                 <Text style={styles.title}>學生會會費繳費證明</Text>
@@ -329,45 +329,51 @@ export default function PrintCertificateModal({
         );
       };
 
-      const PlaceholderCert = ({ idx }: { idx: number }) => (
-        <View style={styles.certCell}>
-          <View style={styles.left}>
-            <View>
-              <Text style={styles.title}>學生會會費繳費證明</Text>
-              <View style={styles.paragraph}>
-                <Text style={styles.body}>
-                  茲收到＿＿＿＿＿＿＿＿＿＿＿＿＿ 繳交之會費新臺幣{" "}
-                  {amount || DEFAULT_AMOUNT} 元，特立此據以茲證明。
+      const PlaceholderCert = ({ idx }: { idx: number }) => {
+        const borderExtras = {
+          borderTop: idx < 2 ? "0.5pt dashed #000" : undefined,
+          borderLeft: idx % 2 === 0 ? "0.5pt dashed #000" : undefined,
+        } as const;
+        return (
+          <View style={[styles.certCell, borderExtras]}>
+            <View style={styles.left}>
+              <View>
+                <Text style={styles.title}>學生會會費繳費證明</Text>
+                <View style={styles.paragraph}>
+                  <Text style={styles.body}>
+                    茲收到＿＿＿＿＿＿＿＿＿＿＿＿＿ 繳交之會費新臺幣{" "}
+                    {amount || DEFAULT_AMOUNT} 元，特立此據以茲證明。
+                  </Text>
+                </View>
+                <Text style={styles.salutation}>此致</Text>
+                <Text style={styles.footerOrg}>市立仁武高中學生代表聯合會</Text>
+              </View>
+              <View style={styles.footerRow}>
+                <Text style={[styles.footerText, styles.date]}>
+                  {issueDate}
                 </Text>
               </View>
-              <Text style={styles.salutation}>此致</Text>
-              <Text style={styles.footerOrg}>市立仁武高中學生代表聯合會</Text>
             </View>
-            <View style={styles.footerRow}>
-              <Text style={[styles.footerText, styles.date]}>{issueDate}</Text>
+            <View style={styles.right}>
+              {qrDataUrl && (
+                <>
+                  <Image style={styles.qr} src={qrDataUrl} />
+                  <Text style={styles.qrCaption}>追蹤學生會 IG</Text>
+                </>
+              )}
             </View>
           </View>
-          <View style={styles.right}>
-            {qrDataUrl && (
-              <>
-                <Image style={styles.qr} src={qrDataUrl} />
-                <Text style={styles.qrCaption}>追蹤學生會 IG</Text>
-              </>
-            )}
-          </View>
-        </View>
-      );
+        );
+      };
 
       const doc = (
         <Document>
           {chunks.map((pageStudents, idx) => {
             const cells: any[] = [];
-            pageStudents.forEach((st, localIdx) => {
-              const idxInPage = localIdx;
-              cells.push(<Cert key={st.id} student={st} idx={idxInPage} />);
+            pageStudents.forEach((st, i) => {
+              cells.push(<Cert key={st.id} student={st} idx={i} />);
             });
-            // Fill remaining slots with blank cells to preserve 4-row grid height and borders
-            for (let i = cells.length; i < CERTS_PER_PAGE; i++) {
+            for (let i = pageStudents.length; i < CERTS_PER_PAGE; i++) {
               cells.push(<PlaceholderCert key={`ph-${i}`} idx={i} />);
             }
             return (
@@ -391,12 +397,7 @@ export default function PrintCertificateModal({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const yearLabel = selectedYear
-        ? formatAcademicYearLabel(selectedYear, currentYear).replace(
-            /\s|\(|\)|/g,
-            "",
-          )
-        : "certificates";
+
       const chineseYearSegment = selectedYear
         ? `${selectedYear} 學年度`
         : "未指定學年度";
@@ -406,7 +407,7 @@ export default function PrintCertificateModal({
       a.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setPdfError("PDF 生成失敗，請稍後再試。");
+      // Swallow error – pdf generation failed
     } finally {
       setDownloading(false);
     }
@@ -513,28 +514,28 @@ export default function PrintCertificateModal({
         )}
 
         {previewReady && (
-          <div className="space-y-6">
-            <h2 className="text-[22px] font-bold text-white text-center tracking-wide mb-4">
+          <div className="space-y-8">
+            <h2 className="text-2xl font-bold text-white text-center tracking-wide">
               預覽與下載
             </h2>
-            <div className="flex items-stretch gap-3 text-[11px]">
-              <div className="flex-1 rounded-xl bg-gray-800/60 border border-gray-700 px-4 py-3 flex flex-col justify-center">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-gray-400">有繳費的學生人數</span>
-                  <span className="text-white text-lg font-semibold leading-none">
-                    {certCount}
-                  </span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-gray-700 bg-gray-800/70 px-3 py-3 text-center">
+                <div className="text-sm font-medium text-gray-100 tracking-wide">
+                  有繳會費的學生
                 </div>
-                <div className="mt-2 h-1 rounded bg-gradient-to-r from-blue-600/60 to-blue-400/40" />
+                <div className="mt-0.5 text-sm font-semibold text-white">
+                  {certCount}
+                  <span className="ml-0.5 text-[10px] text-gray-400">人</span>
+                </div>
               </div>
-              <div className="flex-1 rounded-xl bg-gray-800/60 border border-gray-700 px-4 py-3 flex flex-col justify-center">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-gray-400">PDF 總頁數</span>
-                  <span className="text-white text-lg font-semibold leading-none">
-                    {totalPages || 1}
-                  </span>
+              <div className="rounded-lg border border-gray-700 bg-gray-800/70 px-3 py-3 text-center">
+                <div className="text-sm font-medium text-gray-100 tracking-wide">
+                  PDF 總頁數
                 </div>
-                <div className="mt-2 h-1 rounded bg-gradient-to-r from-purple-600/60 to-purple-400/40" />
+                <div className="mt-0.5 text-sm font-semibold text-white">
+                  {totalPages || 1}
+                  <span className="ml-0.5 text-[10px] text-gray-400">頁</span>
+                </div>
               </div>
             </div>
 
@@ -574,9 +575,7 @@ export default function PrintCertificateModal({
                         alt="qr"
                         className="w-24 h-24 object-contain"
                       />
-                      <span className="mt-1 text-[10px] text-gray-600">
-                        追蹤學生會 IG
-                      </span>
+                      <span className="mt-1 text-[10px]">追蹤學生會 IG</span>
                     </>
                   ) : (
                     <div className="w-24 h-24 border border-dashed border-gray-400 text-[10px] text-gray-600 flex items-center justify-center">
@@ -585,12 +584,12 @@ export default function PrintCertificateModal({
                   )}
                 </div>
               </div>
-              <div className="mt-2 bg-gray-800/50 border border-gray-700/70 rounded-lg px-4 py-3 space-y-1">
-                <p className="text-[10px] text-gray-300">
+              <div className="mt-6 bg-gray-800/60 border border-gray-700 rounded-lg px-4 py-4 space-y-2">
+                <p className="text-xs text-gray-300 leading-relaxed">
                   本列印檔以 A4 黑白格式輸出，每頁有 8
                   張證明單。虛線處為裁切線，請使用 100% 比例列印以避免縮放誤差。
                 </p>
-                <p className="text-[10px] text-amber-300 font-medium">
+                <p className="text-xs text-amber-300 font-medium">
                   列印後，建議加蓋「學生會會章」以確保繳費證明之有效性。
                 </p>
               </div>
